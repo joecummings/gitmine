@@ -6,10 +6,6 @@ from typing import Any, Mapping, Optional, List
 from colorama import Fore, Style
 from collections import defaultdict
 
-__author__ = "Joe Cummings"
-
-# token = "37c9d559934ae509abbf7548c9dfdf58cbb3d656"
-# username = "joecummings"
 GITHUB_CREDENTIALS_PATH = Path.home() / Path(".gitmine_credentials")
 
 
@@ -31,21 +27,13 @@ class GithubConfig:
         elif prop == "username":
             self.username = value
         else:
-            raise ValueError(
-                f"Unknown property specified: {prop}"
-            )  # replace with click exceptions
+            raise ValueError(f"Unknown property specified: {prop}")
 
 
 def make_hyperlink(link: str, text: str) -> str:
+    """ TODO: actual make this hyperlink
+    """
     return text
-    # return f"^[]8;;{link}^G{text}^[]8;;^G"
-
-
-## Add option for asc vs. desc time
-
-## option for interactive
-
-## option for click
 
 
 @click.group()
