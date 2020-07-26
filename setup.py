@@ -1,6 +1,5 @@
-import re
 from setuptools import setup
-
+import re
 
 version = "0.0.1"
 
