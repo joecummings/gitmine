@@ -8,6 +8,7 @@ from collections import defaultdict
 
 GITHUB_CREDENTIALS_PATH = Path.home() / Path(".gitmine_credentials")
 
+
 class GithubConfig:
     """ Github Config object, holds information about username and bearer token
     """
@@ -18,7 +19,7 @@ class GithubConfig:
         elif prop == "username":
             return self.username
         else:
-            raise ValueError(f"Unknown property specified: {prop}")
+            raise click.BadArgumentUsage(message=f"Unknown property specified: {prop}")
 
     def _set(self, prop: str, value: str) -> None:
         if prop == "token":
@@ -26,15 +27,14 @@ class GithubConfig:
         elif prop == "username":
             self.username = value
         else:
-            raise ValueError(
-                f"Unknown property specified: {prop}"
-            ) 
+            raise click.BadArgumentUsage(message=f"Unknown property specified: {prop}")
 
 
 def make_hyperlink(link: str, text: str) -> str:
     """ TODO: actual make this hyperlink
     """
     return text
+
 
 @click.group()
 @click.pass_context
@@ -51,9 +51,8 @@ def gitmine(ctx: click.Context):
 def go(ctx: click.Context, repo: str, number: Optional[int]) -> None:
     """ Open up a browser page to the issue number in the Github repository specified.
 
-    Args:
-        repo: Name of the repository to query
-        number: Issue number of the repository to query. If this is not provided, will open a page to the main page of the repository.
+    REPO is the full name of the repository to query.\n
+    NUMBER is the issue number of the repository to query. If this is not provided, will open a page to the main page of the repository.
     """
     url = f"https://github.com/{repo}/issues/{number if number else ''}"
     click.launch(url)
@@ -113,6 +112,7 @@ def _print_issues(issues: List[Mapping[str, Any]]) -> None:
 
         click.echo()
 
+
 @click.pass_context
 def _get_prs(ctx: click.Context, headers: Mapping[str, str]) -> List[Mapping[str, str]]:
     username = ctx.obj._get("username")
@@ -141,8 +141,7 @@ def _print_prs(prs: List[Mapping[str, str]]) -> None:
 def get(ctx: click.Context, spec: str) -> None:
     """ Get assigned Github Issues and/or Github PRs.
 
-    Args:
-        spec: What information to pull. Can be {issues, prs, all}. 
+    SPEC is what information to pull. Can be {issues, prs, all}. 
     """
 
     headers = {"Authorization": f"Bearer {ctx.obj._get('token')}"}
@@ -159,7 +158,7 @@ def get(ctx: click.Context, spec: str) -> None:
         res = _get_prs(headers)
         _print_prs(res)
     else:
-        raise ValueError(f"Unknown spec: {spec}")
+        raise click.BadArgumentUsage(message=f"Unkown spec: {spec}")
 
 
 @gitmine.command()
@@ -169,14 +168,15 @@ def get(ctx: click.Context, spec: str) -> None:
 def config(ctx: click.Context, prop: str, value: str) -> None:
     """ Access Github Config information. Currently, config requires a Github username and Bearer token.
 
-    Args:
-        prop: Property to be set if *value* is also provided. If not, will return the current value of *prop* if it exists.
-        value: Value of property to be set.
+    PROP is the property to be set if *value* is also provided. If not, will return the current value of *prop* if it exists.\n
+    VALUE is the value of property to be set.
     """
 
     if not value:
-        click.echo(f"{ctx.obj._get(prop)}")
+        click.echo(ctx.obj._get(prop))
     else:
+        ctx.obj._set(prop, value)
+
         with open(GITHUB_CREDENTIALS_PATH, "r") as read_handle:
             props_val = {}
             for line in read_handle:
@@ -187,7 +187,6 @@ def config(ctx: click.Context, prop: str, value: str) -> None:
                 for p, v in props_val.items():
                     write_handle.write(f"{p} {v}\n")
 
-        ctx.obj._set(prop, value)
         click.echo(value)
 
 
