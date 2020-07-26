@@ -8,7 +8,6 @@ from collections import defaultdict
 
 GITHUB_CREDENTIALS_PATH = Path.home() / Path(".gitmine_credentials")
 
-
 class GithubConfig:
     """ Github Config object, holds information about username and bearer token
     """
@@ -27,14 +26,15 @@ class GithubConfig:
         elif prop == "username":
             self.username = value
         else:
-            raise ValueError(f"Unknown property specified: {prop}")
+            raise ValueError(
+                f"Unknown property specified: {prop}"
+            ) 
 
 
 def make_hyperlink(link: str, text: str) -> str:
     """ TODO: actual make this hyperlink
     """
     return text
-
 
 @click.group()
 @click.pass_context
@@ -45,18 +45,18 @@ def gitmine(ctx: click.Context):
 
 
 @gitmine.command()
-@click.argument("repo")
-@click.argument("number")
+@click.argument("repo", nargs=1, required=True, type=click.STRING)
+@click.argument("number", nargs=1, required=False, type=click.INT)
 @click.pass_context
 def go(ctx: click.Context, repo: str, number: Optional[int]) -> None:
     """ Open up a browser page to the issue number in the Github repository specified.
 
     Args:
         repo: Name of the repository to query
-        number: Issue number of the repository to query. If this is left out, will open a page to the main page of the repository.
+        number: Issue number of the repository to query. If this is not provided, will open a page to the main page of the repository.
     """
-    url_format = ""
-    click.launch()
+    url = f"https://github.com/{repo}/issues/{number if number else ''}"
+    click.launch(url)
 
 
 def _catch_bad_responses(res) -> None:
@@ -87,7 +87,7 @@ def _print_issues(issues: List[Mapping[str, Any]]) -> None:
 
     for issue in issues:
 
-        curr_project = issue["repository"]["name"]
+        curr_project = issue["repository"]["full_name"]
         projects[curr_project].append(
             {
                 "title": issue["title"],
@@ -112,7 +112,6 @@ def _print_issues(issues: List[Mapping[str, Any]]) -> None:
             )
 
         click.echo()
-
 
 @click.pass_context
 def _get_prs(ctx: click.Context, headers: Mapping[str, str]) -> List[Mapping[str, str]]:
