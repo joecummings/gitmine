@@ -5,7 +5,7 @@ from gitmine.utils import catch_bad_responses
 import requests
 from collections import defaultdict
 
-import pprint
+import re
 
 class GithubElement:
     """ Container for Github Issue or Pull Request
@@ -40,6 +40,35 @@ def get_prs(ctx: click.Context, headers: Mapping[str, str]) -> List[Mapping[str,
     catch_bad_responses(response)
     return response.json()["items"]
 
+def print_prs(prs: List[Mapping[str, Any]]) -> None:
+    """ Print PRs in the following format:
+
+    repo-title
+    #pr-number pr-title
+    ...
+    """
+
+    projects = defaultdict(list)
+
+    for pr in prs:
+        url = pr["html_url"]
+        curr_project = re.findall(r"github.com/(.+?)/pull", url)[0]
+        projects[curr_project].append(
+            GithubElement(
+                type="PR",
+                title=pr["title"],
+                number=pr["number"],
+                url=url,
+                elapsed_time=datetime.now()
+                - datetime.strptime(pr["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
+            )
+        )
+
+    for project, elements in projects.items():
+        click.echo(project)
+        for element in elements:
+            click.echo(element)
+        click.echo()
 
 def get_issues(headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
     """ Get all Github Issues assigned to user.
@@ -90,14 +119,13 @@ def get_command(ctx: click.Context, spec: str) -> None:
         res = get_issues(headers=headers)
         print_issues(res)
     elif spec == "prs":
-        pass
-        # res = get_prs(ctx, headers=headers)
-        # print_issues(res)
+        res = get_prs(ctx, headers=headers)
+        print_prs(res)
     elif spec == "all":
         res = get_issues(headers=headers)
         print_issues(res)
-        click.echo(f"*" * 20)
-        # res = _get_prs(headers=headers)
-        # _print_prs(res)
+        click.echo(f"* " * 20)
+        res = get_prs(ctx, headers=headers)
+        print_prs(res)
     else:
         raise click.BadArgumentUsage(message=f"Unkown spec: {spec}")
