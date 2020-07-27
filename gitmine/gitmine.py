@@ -28,7 +28,7 @@ def config(ctx: click.Context, prop: str, value: str) -> None:
 
 
 @gitmine.command()
-@click.argument("spec")
+@click.argument("spec", nargs=1, required=True, type=click.STRING)
 @click.pass_context
 def get(ctx: click.Context, spec: str) -> None:
     """ Get assigned Github Issues and/or Github PRs.
