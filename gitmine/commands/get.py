@@ -36,6 +36,34 @@ class GithubElement:
         return "red"
 
 
+class Issue(GithubElement):
+    """ Github Issue
+    """
+
+    def __init__(self, title: str, number: str, url: str, elapsed_time: timedelta, color_coded: bool):
+        super().__init__(
+            type="Issue",
+            title=title,
+            number=number,
+            url=url,
+            elapsed_time=elapsed_time,
+            color_coded=color_coded
+        )
+
+class PullRequest(GithubElement):
+    """ Github Pull Request
+    """
+
+    def __init__(self, title: str, number: str, url: str, elapsed_time: timedelta, color_coded: bool):
+        super().__init__(
+            type="PullRequest",
+            title=title,
+            number=number,
+            url=url,
+            elapsed_time=elapsed_time,
+            color_coded=color_coded
+        )
+
 def get_prs(ctx: click.Context, headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
     """ Get all Github PRs assigned to user.
     """
@@ -61,8 +89,7 @@ def print_prs(prs: List[Mapping[str, Any]], color: bool) -> None:
         url = pr["html_url"]
         curr_project = re.findall(r"github.com/(.+?)/pull", url)[0]
         projects[curr_project].append(
-            GithubElement(
-                type="PR",
+            PullRequest(
                 title=pr["title"],
                 number=pr["number"],
                 url=url,
@@ -102,8 +129,7 @@ def print_issues(issues: List[Mapping[str, Any]], color: bool) -> None:
     for issue in issues:
         curr_project = issue["repository"]["full_name"]
         projects[curr_project].append(
-            GithubElement(
-                type="Issue",
+            Issue(
                 title=issue["title"],
                 number=issue["number"],
                 url=issue["html_url"],
