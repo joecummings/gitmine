@@ -28,7 +28,7 @@ def config(ctx: click.Context, prop: str, value: str) -> None:
 
 
 @gitmine.command()
-@click.option("--color/--no-color", default=True)
+@click.option("--color/--no-color", default=True, help="Color code Issues/PRs according to elapsed time.")
 @click.argument(
     "spec", nargs=1, required=True, type=click.Choice(["issues", "prs", "all"])
 )
