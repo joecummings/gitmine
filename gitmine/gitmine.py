@@ -15,7 +15,7 @@ def gitmine(ctx: click.Context):
 
 
 @gitmine.command()
-@click.argument("prop", nargs=1, required=True, type=click.STRING)
+@click.argument("prop", nargs=1, required=True, type=click.Choice(["username", "token"]))
 @click.argument("value", nargs=1, required=False, type=click.STRING)
 @click.pass_context
 def config(ctx: click.Context, prop: str, value: str) -> None:
