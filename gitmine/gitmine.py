@@ -10,7 +10,7 @@ from gitmine.commands.go import go_command
 @click.group()
 @click.pass_context
 def gitmine(ctx: click.Context):
-    """ Simple CLI for querying assigned Issues and PR reviews from Github
+    """ Simple CLI for querying assigned Issues and PR reviews from Github.
     """
 
 
@@ -28,14 +28,17 @@ def config(ctx: click.Context, prop: str, value: str) -> None:
 
 
 @gitmine.command()
-@click.argument("spec", nargs=1, required=True, type=click.STRING)
+@click.option("--color/--no-color", default=True)
+@click.argument(
+    "spec", nargs=1, required=True, type=click.Choice(["issues", "prs", "all"])
+)
 @click.pass_context
-def get(ctx: click.Context, spec: str) -> None:
+def get(ctx: click.Context, spec: str, color: bool) -> None:
     """ Get assigned Github Issues and/or Github PRs.
 
     SPEC is what information to pull. Can be {issues, prs, all}.
     """
-    get_command(ctx, spec)
+    get_command(ctx, spec, color)
 
 
 @gitmine.command()

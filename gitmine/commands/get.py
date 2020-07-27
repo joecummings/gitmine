@@ -7,28 +7,34 @@ from collections import defaultdict
 
 import re
 
+
 class GithubElement:
-    """ Container for Github Issue or Pull Request
+    """ Container for Github Issue or Pull Request.
     """
 
     def __init__(
-        self, type: str, title: str, number: int, url: str, elapsed_time: timedelta
+        self, type: str, title: str, number: int, url: str, elapsed_time: timedelta, color_coded: bool
     ) -> None:
         self.type = type
         self.title = title
         self.number = number
         self.url = url
         self.elapsed_time = elapsed_time
+        self.color_coded = color_coded
 
     def __repr__(self) -> str:
         return f"{click.style(''.join(['#', str(self.number)]), fg=self._elapsed_time_to_color())} {self.title}"
 
     def _elapsed_time_to_color(self) -> str:
+        if not self.color_coded:
+            return "white"
+
         if self.elapsed_time < timedelta(days=1):
             return "green"
         if self.elapsed_time < timedelta(days=3):
             return "yellow"
         return "red"
+
 
 def get_prs(ctx: click.Context, headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
     """ Get all Github PRs assigned to user.
@@ -40,7 +46,8 @@ def get_prs(ctx: click.Context, headers: Mapping[str, str]) -> List[Mapping[str,
     catch_bad_responses(response)
     return response.json()["items"]
 
-def print_prs(prs: List[Mapping[str, Any]]) -> None:
+
+def print_prs(prs: List[Mapping[str, Any]], color: bool) -> None:
     """ Print PRs in the following format:
 
     repo-title
@@ -61,6 +68,7 @@ def print_prs(prs: List[Mapping[str, Any]]) -> None:
                 url=url,
                 elapsed_time=datetime.now()
                 - datetime.strptime(pr["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
+                color_coded=True if color else False
             )
         )
 
@@ -69,6 +77,7 @@ def print_prs(prs: List[Mapping[str, Any]]) -> None:
         for element in elements:
             click.echo(element)
         click.echo()
+
 
 def get_issues(headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
     """ Get all Github Issues assigned to user.
@@ -80,7 +89,7 @@ def get_issues(headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
     return response.json()
 
 
-def print_issues(issues: List[Mapping[str, Any]]) -> None:
+def print_issues(issues: List[Mapping[str, Any]], color: bool) -> None:
     """ Print issues in the following format:
 
     repo-title
@@ -100,6 +109,7 @@ def print_issues(issues: List[Mapping[str, Any]]) -> None:
                 url=issue["html_url"],
                 elapsed_time=datetime.now()
                 - datetime.strptime(issue["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
+                color_coded= True if color else False
             )
         )
 
@@ -110,22 +120,22 @@ def print_issues(issues: List[Mapping[str, Any]]) -> None:
         click.echo()
 
 
-def get_command(ctx: click.Context, spec: str) -> None:
+def get_command(ctx: click.Context, spec: str, color: bool) -> None:
     """ Implementation of the *get* command.
     """
 
     headers = {"Authorization": f"Bearer {ctx.obj.get_value('token')}"}
     if spec == "issues":
         res = get_issues(headers=headers)
-        print_issues(res)
+        print_issues(res, color)
     elif spec == "prs":
         res = get_prs(ctx, headers=headers)
-        print_prs(res)
+        print_prs(res, color)
     elif spec == "all":
         res = get_issues(headers=headers)
-        print_issues(res)
+        print_issues(res, color)
         click.echo(f"* " * 20)
         res = get_prs(ctx, headers=headers)
-        print_prs(res)
+        print_prs(res, color)
     else:
         raise click.BadArgumentUsage(message=f"Unkown spec: {spec}")
