@@ -15,7 +15,9 @@ def gitmine(ctx: click.Context):
 
 
 @gitmine.command()
-@click.argument("prop", nargs=1, required=True, type=click.Choice(["username", "token"]))
+@click.argument(
+    "prop", nargs=1, required=True, type=click.Choice(["username", "token"])
+)
 @click.argument("value", nargs=1, required=False, type=click.STRING)
 @click.pass_context
 def config(ctx: click.Context, prop: str, value: str) -> None:
@@ -28,7 +30,11 @@ def config(ctx: click.Context, prop: str, value: str) -> None:
 
 
 @gitmine.command()
-@click.option("--color/--no-color", default=True, help="Color code Issues/PRs according to elapsed time.")
+@click.option(
+    "--color/--no-color",
+    default=True,
+    help="Color code Issues/PRs according to elapsed time.",
+)
 @click.argument(
     "spec", nargs=1, required=True, type=click.Choice(["issues", "prs", "all"])
 )

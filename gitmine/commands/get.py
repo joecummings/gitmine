@@ -1,11 +1,12 @@
-import click
+import re
+from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, List, Mapping
-from gitmine.utils import catch_bad_responses
-import requests
-from collections import defaultdict
 
-import re
+import click
+import requests
+
+from gitmine.utils import catch_bad_responses
 
 
 class GithubElement:
