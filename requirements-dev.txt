@@ -1,3 +1,5 @@
 black
 mypy
 setuptools
+flake8
+isort

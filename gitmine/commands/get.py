@@ -74,10 +74,10 @@ def print_issues(issues: List[Mapping[str, Any]]) -> None:
             )
         )
 
-    for project, issues in projects.items():
+    for project, elements in projects.items():
         click.echo(project)
-        for issue in issues:
-            click.echo(issue)
+        for element in elements:
+            click.echo(element)
         click.echo()
 
 
