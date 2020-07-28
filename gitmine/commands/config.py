@@ -1,4 +1,5 @@
 import click
+from pathlib import Path
 
 from gitmine.constants import GITHUB_CREDENTIALS_PATH
 
@@ -52,6 +53,7 @@ def config_command(ctx: click.Context, prop: str, value: str) -> None:
 def get_or_create_github_config() -> GithubConfig:
     """ Get Github Config info if it's already been written to disk,
         otherwise create an empty config to be filled in later.
+        Create a credentials folder if it does not exist
     """
 
     github_config = GithubConfig()
@@ -61,5 +63,7 @@ def get_or_create_github_config() -> GithubConfig:
             for line in handle:
                 prop, value = line.split()
                 github_config.set_prop(prop, value)
-
+    else:
+        Path(GITHUB_CREDENTIALS_PATH).touch()
+        
     return github_config
