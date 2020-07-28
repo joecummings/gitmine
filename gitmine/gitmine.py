@@ -35,16 +35,21 @@ def config(ctx: click.Context, prop: str, value: str) -> None:
     default=True,
     help="Color code Issues/PRs according to elapsed time.",
 )
+@click.option(
+    "--asc/--desc",
+    default=False,
+    help="Print Issues/PRs in ascending/descending order of elapsed time",
+)
 @click.argument(
     "spec", nargs=1, required=True, type=click.Choice(["issues", "prs", "all"])
 )
 @click.pass_context
-def get(ctx: click.Context, spec: str, color: bool) -> None:
+def get(ctx: click.Context, spec: str, color: bool, asc: bool) -> None:
     """ Get assigned Github Issues and/or Github PRs.
 
     SPEC is what information to pull. Can be {issues, prs, all}.
     """
-    get_command(ctx, spec, color)
+    get_command(ctx, spec, color, asc)
 
 
 @gitmine.command()
