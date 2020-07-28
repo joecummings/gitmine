@@ -14,7 +14,13 @@ class GithubElement:
     """
 
     def __init__(
-        self, type: str, title: str, number: int, url: str, elapsed_time: timedelta, color_coded: bool
+        self,
+        type: str,
+        title: str,
+        number: int,
+        url: str,
+        elapsed_time: timedelta,
+        color_coded: bool,
     ) -> None:
         self.type = type
         self.title = title
@@ -41,29 +47,45 @@ class Issue(GithubElement):
     """ Github Issue
     """
 
-    def __init__(self, title: str, number: str, url: str, elapsed_time: timedelta, color_coded: bool):
+    def __init__(
+        self,
+        title: str,
+        number: str,
+        url: str,
+        elapsed_time: timedelta,
+        color_coded: bool,
+    ):
         super().__init__(
             type="Issue",
             title=title,
             number=number,
             url=url,
             elapsed_time=elapsed_time,
-            color_coded=color_coded
+            color_coded=color_coded,
         )
+
 
 class PullRequest(GithubElement):
     """ Github Pull Request
     """
 
-    def __init__(self, title: str, number: str, url: str, elapsed_time: timedelta, color_coded: bool):
+    def __init__(
+        self,
+        title: str,
+        number: str,
+        url: str,
+        elapsed_time: timedelta,
+        color_coded: bool,
+    ):
         super().__init__(
             type="PullRequest",
             title=title,
             number=number,
             url=url,
             elapsed_time=elapsed_time,
-            color_coded=color_coded
+            color_coded=color_coded,
         )
+
 
 def get_prs(ctx: click.Context, headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
     """ Get all Github PRs assigned to user.
@@ -96,7 +118,7 @@ def print_prs(prs: List[Mapping[str, Any]], color: bool) -> None:
                 url=url,
                 elapsed_time=datetime.now()
                 - datetime.strptime(pr["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
-                color_coded=True if color else False
+                color_coded=True if color else False,
             )
         )
 
@@ -136,7 +158,7 @@ def print_issues(issues: List[Mapping[str, Any]], color: bool) -> None:
                 url=issue["html_url"],
                 elapsed_time=datetime.now()
                 - datetime.strptime(issue["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
-                color_coded= True if color else False
+                color_coded=True if color else False,
             )
         )
 

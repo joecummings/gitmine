@@ -57,7 +57,7 @@ def go(ctx: click.Context, repo: str, number: Optional[int]) -> None:
     REPO is the full name of the repository to query.\n
     NUMBER is the issue number of the repository to query. If this is not provided, will open a page to the main page of the repository.
     """
-    go_command(ctx, repo, number)
+    go_command(repo, number)
 
 
 def main():

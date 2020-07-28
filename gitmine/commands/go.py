@@ -2,7 +2,7 @@ import click
 from typing import Optional
 
 
-def go_command(ctx: click.Context, repo: str, number: Optional[int]) -> None:
+def go_command(repo: str, number: Optional[int]) -> None:
     """ Implementation of the *go* command.
     """
 

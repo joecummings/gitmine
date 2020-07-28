@@ -64,6 +64,6 @@ def get_or_create_github_config() -> GithubConfig:
                 prop, value = line.split()
                 github_config.set_prop(prop, value)
     else:
-        Path(GITHUB_CREDENTIALS_PATH).touch()
-        
+        GITHUB_CREDENTIALS_PATH.touch()
+
     return github_config
