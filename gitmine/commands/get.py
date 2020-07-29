@@ -50,7 +50,7 @@ class Issue(GithubElement):
     def __init__(
         self,
         title: str,
-        number: str,
+        number: int,
         url: str,
         elapsed_time: timedelta,
         color_coded: bool,
@@ -72,7 +72,7 @@ class PullRequest(GithubElement):
     def __init__(
         self,
         title: str,
-        number: str,
+        number: int,
         url: str,
         elapsed_time: timedelta,
         color_coded: bool,
@@ -122,17 +122,7 @@ def print_prs(prs: List[Mapping[str, Any]], color: bool, asc: bool) -> None:
             )
         )
 
-    reverse_bool = True if asc else False
-    projects = {
-        project: sorted(prs, key=lambda pr: pr.elapsed_time, reverse=reverse_bool)
-        for project, prs in projects.items()
-    }
-
-    for project, elements in projects.items():
-        click.echo(project)
-        for element in elements:
-            click.echo(element)
-        click.echo()
+    organize_and_echo_elements(projects, asc)
 
 
 def get_issues(headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
@@ -168,12 +158,19 @@ def print_issues(issues: List[Mapping[str, Any]], color: bool, asc: bool) -> Non
             )
         )
 
+    organize_and_echo_elements(projects, asc)
+
+
+def organize_and_echo_elements(projects: Mapping[str, Any], asc: bool) -> None:
+    """ Sort elements according to *asc* and print to stdout.
+    """
+
     reverse_bool = True if asc else False
     projects = {
         project: sorted(
-            issues, key=lambda issue: issue.elapsed_time, reverse=reverse_bool
+            elements, key=lambda elem: elem.elapsed_time, reverse=reverse_bool
         )
-        for project, issues in projects.items()
+        for project, elements in projects.items()
     }
 
     for project, elements in projects.items():
