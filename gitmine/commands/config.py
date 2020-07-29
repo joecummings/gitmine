@@ -53,7 +53,7 @@ def config_command(ctx: click.Context, prop: str, value: str) -> None:
 def get_or_create_github_config() -> GithubConfig:
     """ Get Github Config info if it's already been written to disk,
         otherwise create an empty config to be filled in later.
-        Create a credentials folder if it does not exist
+        Create a credentials folder if it does not exist.
     """
 
     github_config = GithubConfig()
