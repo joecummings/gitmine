@@ -105,6 +105,8 @@ def print_prs(prs: List[Mapping[str, Any]], color: bool, asc: bool) -> None:
     #pr-number pr-title
     ...
     """
+    if not prs:
+        click.echo("No assigned PRs! Keep up the good work.")
 
     projects = defaultdict(list)
 
@@ -142,6 +144,8 @@ def print_issues(issues: List[Mapping[str, Any]], color: bool, asc: bool) -> Non
     #issue-number issue-title
     ...
     """
+    if not issues:
+        click.echo("No assigned Issues! Keep up the good work.")
 
     projects = defaultdict(list)
 
