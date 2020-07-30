@@ -15,18 +15,23 @@ def gitmine(ctx: click.Context):
 
 
 @gitmine.command()
+@click.option(
+    "--encrypt/--no-encrypt",
+    default=False,
+    help="Encrypt your personal access token."
+)
 @click.argument(
     "prop", nargs=1, required=True, type=click.Choice(["username", "token"])
 )
 @click.argument("value", nargs=1, required=False, type=click.STRING)
 @click.pass_context
-def config(ctx: click.Context, prop: str, value: str) -> None:
+def config(ctx: click.Context, prop: str, value: str, encrypt: bool) -> None:
     """ Access Github Config information. Currently, config requires a Github username and Bearer token.
 
     PROP is the property to be set if *value* is also provided. If not, will return the current value of *prop* if it exists.\n
     VALUE is the value of property to be set.
     """
-    config_command(ctx, prop, value)
+    config_command(ctx, prop, value, encrypt)
 
 
 @gitmine.command()
@@ -67,7 +72,6 @@ def go(ctx: click.Context, repo: str, number: Optional[int]) -> None:
 
 def main():
     gitmine(obj=get_or_create_github_config())
-
 
 if __name__ == "__main__":
     main()
