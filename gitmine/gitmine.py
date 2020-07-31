@@ -15,18 +15,23 @@ def gitmine(ctx: click.Context):
 
 
 @gitmine.command()
+@click.option(
+    "--encrypt/--no-encrypt",
+    default=False,
+    help="Encrypt your credentials. Undo encryption by re-setting the config without the flag."
+)
 @click.argument(
     "prop", nargs=1, required=True, type=click.Choice(["username", "token"])
 )
 @click.argument("value", nargs=1, required=False, type=click.STRING)
 @click.pass_context
-def config(ctx: click.Context, prop: str, value: str) -> None:
-    """ Access Github Config information. Currently, config requires a Github username and Bearer token.
+def config(ctx: click.Context, prop: str, value: str, encrypt: bool) -> None:
+    """ Set or Access Github Config information. Currently, config requires a Github username and Bearer token.
 
-    PROP is the property to be set if *value* is also provided. If not, will return the current value of *prop* if it exists.\n
+    [username|token] is the property to be set if *value* is also provided. If not, will return the current value of *prop* if it exists.\n
     VALUE is the value of property to be set.
     """
-    config_command(ctx, prop, value)
+    config_command(ctx, prop, value, encrypt)
 
 
 @gitmine.command()
@@ -47,7 +52,7 @@ def config(ctx: click.Context, prop: str, value: str) -> None:
 def get(ctx: click.Context, spec: str, color: bool, asc: bool) -> None:
     """ Get assigned Github Issues and/or Github PRs.
 
-    SPEC is what information to pull. Can be {issues, prs, all}.
+    [issues|prs|all] is what information to pull. Can be {issues, prs, all}.
     """
     get_command(ctx, spec, color, asc)
 
@@ -57,7 +62,7 @@ def get(ctx: click.Context, spec: str, color: bool, asc: bool) -> None:
 @click.argument("number", nargs=1, required=False, type=click.INT)
 @click.pass_context
 def go(ctx: click.Context, repo: str, number: Optional[int]) -> None:
-    """ Open up a browser page to the issue number in the Github repository specified.
+    """ Open a browser page for the given repositiory / issue.
 
     REPO is the full name of the repository to query.\n
     NUMBER is the issue number of the repository to query. If this is not provided, will open a page to the main page of the repository.
@@ -67,7 +72,6 @@ def go(ctx: click.Context, repo: str, number: Optional[int]) -> None:
 
 def main():
     gitmine(obj=get_or_create_github_config())
-
 
 if __name__ == "__main__":
     main()
