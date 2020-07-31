@@ -28,7 +28,7 @@ def gitmine(ctx: click.Context):
 def config(ctx: click.Context, prop: str, value: str, encrypt: bool) -> None:
     """ Access Github Config information. Currently, config requires a Github username and Bearer token.
 
-    PROP is the property to be set if *value* is also provided. If not, will return the current value of *prop* if it exists.\n
+    [username|token] is the property to be set if *value* is also provided. If not, will return the current value of *prop* if it exists.\n
     VALUE is the value of property to be set.
     """
     config_command(ctx, prop, value, encrypt)
@@ -52,7 +52,7 @@ def config(ctx: click.Context, prop: str, value: str, encrypt: bool) -> None:
 def get(ctx: click.Context, spec: str, color: bool, asc: bool) -> None:
     """ Get assigned Github Issues and/or Github PRs.
 
-    SPEC is what information to pull. Can be {issues, prs, all}.
+    [issues|prs|all] is what information to pull. Can be {issues, prs, all}.
     """
     get_command(ctx, spec, color, asc)
 
