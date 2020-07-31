@@ -2,7 +2,13 @@
 
 Stop getting buried under countless Github Issues and PRs. Organize, reference, and close with ease.
 
-Based on the amazing work done by Github themselves on [hub](https://github.com/github/hub).
+Based on the amazing work done by Github itself on [hub](https://github.com/github/hub).
+
+#### Who is this for?
+
+I work on a lot of projects across many repositories. It was a pain in the a$$ to keep track of all the Issues I was assigned and PRs I had to review. Some tools provided a quick way to see Issues from one repository, but I needed a quick way to view, organize and open from any of these projects, thus `gitmine` was born. 
+
+If you aren't a heavy user of Github or maybe only have one repository you focus on, this is probably more than you need.
 
 ## Usage
 
