@@ -18,7 +18,7 @@ def gitmine(ctx: click.Context):
 @click.option(
     "--encrypt/--no-encrypt",
     default=False,
-    help="Encrypt your personal access token."
+    help="Encrypt your credentials. Undo encryption by re-setting the config without the flag."
 )
 @click.argument(
     "prop", nargs=1, required=True, type=click.Choice(["username", "token"])

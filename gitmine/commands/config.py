@@ -1,7 +1,7 @@
-import click
-from pathlib import Path
 import base64
 import os
+import click
+from pathlib import Path
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
