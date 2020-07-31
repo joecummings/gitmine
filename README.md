@@ -52,3 +52,7 @@ pip install 'git+https://github.com/joecummings/gitmine.git'
 ## Contributing
 
 See [Contributing.md](Contributing.md)
+
+## Common Errors and FAQ's
+
+* Running ```gitmine get prs``` with the wrong useranme will not error but return nothing
