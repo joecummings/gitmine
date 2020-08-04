@@ -7,7 +7,11 @@ import click
 import requests
 
 from gitmine.utils import catch_bad_responses
+from gitmine.constants import LOGGER
 
+import logging
+logger = logging.getLogger(LOGGER)
+logging.basicConfig(level=logger.level)
 
 class GithubElement:
     """ Container for Github Issue or Pull Request.
@@ -90,11 +94,11 @@ class PullRequest(GithubElement):
 def get_prs(ctx: click.Context, headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
     """ Get all Github PRs assigned to user.
     """
-
     username = ctx.obj.get_value("username")
+    logger.debug(f"Fetching PRs for {username} from github.com \n")
     url_format = f"https://api.github.com/search/issues?q=is:open+is:pr+review-requested:{username}"
     response = requests.get(url_format, headers=headers)
-    catch_bad_responses(response)
+    catch_bad_responses(response, get="prs")
     return response.json()["items"]
 
 
@@ -130,10 +134,10 @@ def print_prs(prs: List[Mapping[str, Any]], color: bool, asc: bool) -> None:
 def get_issues(headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
     """ Get all Github Issues assigned to user.
     """
-
+    logger.debug(f"Fetching issues from github.com \n")
     url_format = "https://api.github.com/issues"
     response = requests.get(url_format, headers=headers)
-    catch_bad_responses(response)
+    catch_bad_responses(response, get="issues")
     return response.json()
 
 
@@ -187,7 +191,8 @@ def organize_and_echo_elements(projects: Mapping[str, Any], asc: bool) -> None:
 def get_command(ctx: click.Context, spec: str, color: bool, asc: bool) -> None:
     """ Implementation of the *get* command.
     """
-
+    logger.info(f"""Getting {spec} for {ctx.obj.get_value('username')}
+        from github.com with parameters: color={str(color)}, ascending={str(asc)} \n""")
     headers = {"Authorization": f"Bearer {ctx.obj.get_value('token')}"}
     if spec == "issues":
         res = get_issues(headers=headers)

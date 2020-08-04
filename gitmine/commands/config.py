@@ -6,8 +6,12 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.exceptions import InvalidKey
 
-from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATH
+from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATH, LOGGER
+
+import logging 
+logger = logging.getLogger(LOGGER)
 
 class GithubConfig:
     """ Github Config object, holds information about username and bearer token
@@ -70,6 +74,7 @@ def config_command(ctx: click.Context, prop: str, value: str, e: bool) -> None:
         if e: 
             encrypt_file(key, GITHUB_CREDENTIALS_PATH)
 
+        logger.info(f"Config {prop} {value} written at {GITHUB_CREDENTIALS_PATH}")
         click.echo(value)
 
 def get_or_create_github_config() -> GithubConfig:
@@ -78,7 +83,6 @@ def get_or_create_github_config() -> GithubConfig:
         If a key has been stored locally then the file is encrypted
         Create a credentials folder if it does not exist.
     """
-
     github_config = GithubConfig()
 
     key_exists = KEY_PATH.exists()
@@ -87,8 +91,10 @@ def get_or_create_github_config() -> GithubConfig:
             key = handle.read()
             github_config.set_prop("key", key)
             decrypt_file(key, GITHUB_CREDENTIALS_PATH)
+                
 
     if GITHUB_CREDENTIALS_PATH.exists():
+        logger.info("Found github credentials - loading from file")
         with open(GITHUB_CREDENTIALS_PATH, "r") as handle:
             for line in handle:
                 prop, value = line.split()
@@ -109,27 +115,38 @@ def generate_key() -> str:
     with open(KEY_PATH, 'wb') as handle:
         handle.write(key)
 
+    logger.debug(f"Generated encryption key {key}, stored at {KEY_PATH}")
     return key
 
 def encrypt_file(key: str, file: Path) -> str:
     """Uses Fernet encryption to encrypt the file at the given path using the key
     """
     if not file.exists():
+        logger.info(f"Could not find file {file}")
         return
     with open(file, "r") as read_handle:
         data = read_handle.read().encode()
     f = Fernet(key)
     with open(file, "wb") as write_handle:
-        write_handle.write(f.encrypt(data))
+        try:
+            write_handle.write(f.encrypt(data))
+        except InvalidKey:
+            raise Exception("InvalidKey: could not open your credentials file. Please try setting your credentials again.")
+    logging.debug(f"Successfully encrypted file {file}")
 
 def decrypt_file(key: str, file: Path) -> str:
-    """Uses Fernet encryption to decrypt the given token with the corresponding key
+    """Uses Fernet encryption to decrypt the given file with the corresponding key
         Returns plaintext
     """
     if not file.exists():
+        logger.info(f"Could not find file {file}")
         return
     with open(file, "rb") as read_handle:
         data = read_handle.read()
     f = Fernet(key)
     with open(file, "w") as write_handle:
-        write_handle.write(f.decrypt(data).decode('UTF-8'))
+        try:
+            write_handle.write(f.decrypt(data).decode('UTF-8'))
+        except InvalidKey:
+            raise Exception("InvalidKey: could not open your credentials file. Please try setting your credentials again.")
+    logger.debug(f"Successfully decrypted file {file}")
