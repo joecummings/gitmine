@@ -1,5 +1,6 @@
-from setuptools import setup, find_packages
 import re
+
+from setuptools import find_packages, setup
 
 version = "0.0.2"
 

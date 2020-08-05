@@ -1,12 +1,12 @@
-import click
-
 from typing import Optional
 
-from gitmine.utils import set_verbosity
+import click
+
 from gitmine.commands.config import config_command, get_or_create_github_config
 from gitmine.commands.get import get_command
 from gitmine.commands.go import go_command
 from gitmine.utils import set_verbosity
+
 
 @click.group()
 @click.option(
@@ -105,7 +105,7 @@ def go(ctx: click.Context, repo: str, number: Optional[int], verbose: int) -> No
 
 def main():
     gitmine(obj={})
-    
+
 
 if __name__ == "__main__":
     main()

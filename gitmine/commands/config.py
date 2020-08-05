@@ -9,11 +9,11 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.exceptions import InvalidKey
 
 from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATH, LOGGER
 
 logger = logging.getLogger(LOGGER)
+
 
 class GithubConfig:
     """ Github Config object, holds information about username and bearer token
@@ -93,14 +93,13 @@ def get_or_create_github_config() -> GithubConfig:
     if key_exists:
         with open(KEY_PATH, "rb") as handle:
             key = handle.read()
-            github_config.set_prop("key", key)
+            github_config.set_prop("key", str(key))
             decrypt_file(key, GITHUB_CREDENTIALS_PATH)
-                
 
     if GITHUB_CREDENTIALS_PATH.exists():
         logger.info("Found github credentials - loading from file")
-        with open(GITHUB_CREDENTIALS_PATH, "r") as handle:
-            for line in handle:
+        with open(GITHUB_CREDENTIALS_PATH, "r") as cred_handle:
+            for line in cred_handle:
                 prop, value = line.split()
                 github_config.set_prop(prop, value)
     else:
@@ -112,7 +111,7 @@ def get_or_create_github_config() -> GithubConfig:
     return github_config
 
 
-def generate_key() -> str:
+def generate_key() -> bytes:
     """Creates an encryption using the given token
        Saves the key to a local file
     """
@@ -121,11 +120,11 @@ def generate_key() -> str:
     with open(KEY_PATH, "wb") as handle:
         handle.write(key)
 
-    logger.debug(f"Generated encryption key {key}, stored at {KEY_PATH}")
+    logger.debug(f"Generated encryption key {key}, stored at {KEY_PATH}")  # type: ignore
     return key
 
 
-def encrypt_file(key: str, file: Path) -> str:
+def encrypt_file(key: bytes, file: Path) -> None:
     """Uses Fernet encryption to encrypt the file at the given path using the key
     """
     if not file.exists():
@@ -144,7 +143,7 @@ def encrypt_file(key: str, file: Path) -> str:
     logging.debug(f"Successfully encrypted file {file}")
 
 
-def decrypt_file(key: str, file: Path) -> str:
+def decrypt_file(key: bytes, file: Path) -> None:
     """Uses Fernet encryption to decrypt the given file with the corresponding key
         Returns plaintext
     """
