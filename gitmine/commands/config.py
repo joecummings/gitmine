@@ -9,11 +9,11 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.exceptions import InvalidKey
 
 from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATH, LOGGER
 
 logger = logging.getLogger(LOGGER)
-
 
 class GithubConfig:
     """ Github Config object, holds information about username and bearer token
@@ -95,6 +95,7 @@ def get_or_create_github_config() -> GithubConfig:
             key = handle.read()
             github_config.set_prop("key", key)
             decrypt_file(key, GITHUB_CREDENTIALS_PATH)
+                
 
     if GITHUB_CREDENTIALS_PATH.exists():
         logger.info("Found github credentials - loading from file")
