@@ -10,7 +10,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATHm LOGGER
+from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATH, LOGGER
 
 logger = logging.getLogger(LOGGER)
 
@@ -63,15 +63,15 @@ def config_command(ctx: click.Context, prop: str, value: str, e: bool) -> None:
 
         ctx.obj.set_prop(prop, value)
 
-        with open(GITHUB_CREDENTIALS_PATH, "rb") as read_handle:
+        with open(GITHUB_CREDENTIALS_PATH, "r") as read_handle:
             props_val = {}
             for line in read_handle:
                 curr_prop, curr_value = line.split()
-                props_val[curr_prop.decode()] = curr_value.decode()
-            with open(GITHUB_CREDENTIALS_PATH, "wb+") as write_handle:
+                props_val[curr_prop] = curr_value
+            with open(GITHUB_CREDENTIALS_PATH, "w+") as write_handle:
                 props_val[prop] = value
                 for true_prop, true_value in props_val.items():
-                    write_handle.write(f"{true_prop} {true_value}\n".encode())
+                    write_handle.write(f"{true_prop} {true_value}\n")
 
         if e:
             encrypt_file(key, GITHUB_CREDENTIALS_PATH)
@@ -92,7 +92,7 @@ def get_or_create_github_config() -> GithubConfig:
     if key_exists:
         with open(KEY_PATH, "rb") as handle:
             key = handle.read()
-            github_config.set_prop("key", str(key))
+            github_config.set_prop("key", key)
             decrypt_file(key, GITHUB_CREDENTIALS_PATH)
 
     if GITHUB_CREDENTIALS_PATH.exists():

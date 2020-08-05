@@ -14,7 +14,6 @@ HTTP_CONNECTION = HTTPConnection("localhost", 8080, timeout=10)
 
 logging.config.fileConfig(LOGGER_PATH)
 
-
 def set_verbosity(verbose: int) -> None:
     """
     Sets the Log Level given a verbose number
