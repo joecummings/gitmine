@@ -12,6 +12,7 @@ from gitmine.utils import catch_bad_responses
 
 logger = logging.getLogger(LOGGER)
 
+
 class GithubElement:
     """ Container for Github Issue or Pull Request.
     """
@@ -96,7 +97,8 @@ def get_prs(ctx: click.Context, headers: Mapping[str, str]) -> List[Mapping[str,
     username = ctx.obj.get_value("username")
     logger.debug(f"Fetching PRs for {username} from github.com \n")
     url_format = f"https://api.github.com/search/issues?q=is:open+is:pr+review-requested:{username}"
-    response = requests.get(url_format, headers=headers)
+    with requests.Session() as s:
+        response = s.get(url_format, headers=headers)
     catch_bad_responses(response, get="prs")
     return response.json()["items"]
 
