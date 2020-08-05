@@ -1,5 +1,35 @@
 import click
 
+try: 
+    from http.client import HTTPConnection
+except ImportError:
+    from httplib import HTTPConnection
+
+from gitmine.constants import LOGGER, LOGGER_PATH, VERBOSE_MAP
+
+import logging
+import logging.config
+logging.config.fileConfig(LOGGER_PATH)
+
+def set_verbosity(verbose: int) -> None:
+    """
+    Sets the Log Level given a verbose number
+    The requests logger is also set https://stackoverflow.com/questions/16337511/log-all-requests-from-the-python-requests-module
+    """
+    if verbose > 0:
+
+        log_level = getattr(logging, VERBOSE_MAP.get(min(verbose,3), ""), None)
+        
+        if not isinstance(log_level, int):
+            raise click.BadParameter()
+        
+        #HTTPConnection.debuglevel = 1 if log_level <= 20 else 0
+        #Set all the available loggers
+        for key in logging.Logger.manager.loggerDict:
+            logger = logging.getLogger(key)
+            logger.setLevel(log_level)
+
+ 
 def catch_bad_responses(res, **kwargs) -> None:
     """ Raise error code if response is not 200 OK
     """

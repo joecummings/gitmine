@@ -5,3 +5,9 @@ KEY_PATH = Path.cwd() / Path("gitmine.key")
 
 LOGGER_PATH = Path.cwd() / Path("logging.conf")
 LOGGER = "gitmine"
+
+VERBOSE_MAP = {
+    1: "ERROR",
+    2: "INFO",
+    3: "DEBUG"
+}
