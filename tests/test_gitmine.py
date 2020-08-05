@@ -1,6 +1,7 @@
 from click.testing import CliRunner
-from gitmine.gitmine import go, get, config
+
 from gitmine.commands.config import get_or_create_github_config
+from gitmine.gitmine import config, get, go
 
 runner = CliRunner()
 

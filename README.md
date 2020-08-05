@@ -6,7 +6,7 @@ Based on the amazing work done by Github itself on [hub](https://github.com/gith
 
 #### Who is this for?
 
-I work on a lot of projects across many repositories. It was a pain in the a$$ to keep track of all the Issues I was assigned and PRs I had to review. Some tools provided a quick way to see Issues from one repository, but I needed a quick way to view, organize and open from any of these projects, thus `gitmine` was born. 
+I work on a lot of projects across many repositories. It was a pain in the a$$ to keep track of all the Issues I was assigned and PRs I had to review. Some tools provided a quick way to see Issues from one repository, but I needed a quick way to view, organize and open from any of these projects, thus `gitmine` was born.
 
 If you aren't a heavy user of Github or maybe only have one repository you focus on, this is probably more than you need.
 
@@ -27,7 +27,7 @@ Commands:
   go      Open a browser page for the given repositiory / issue.
 ```
 
-### Config 
+### Config
 
 To use gitmine you will first need to generate a Personal Access Token. You can follow the instructions [here](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
 
@@ -36,7 +36,7 @@ gitmine config username ~git-username~
 gitmine config token ~git-token~
 ```
 
-Gitmine gives you the option to encrypt your credentials with the --encrypt option. 
+Gitmine gives you the option to encrypt your credentials with the --encrypt option.
 
 ## Installation
 

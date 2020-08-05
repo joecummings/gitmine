@@ -9,8 +9,6 @@ import requests
 
 from gitmine.constants import LOGGER
 from gitmine.utils import catch_bad_responses
-from gitmine.constants import LOGGER
-
 
 logger = logging.getLogger(LOGGER)
 logging.basicConfig(level=logger.level)
