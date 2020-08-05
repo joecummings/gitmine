@@ -21,9 +21,9 @@ def set_verbosity(verbose: int) -> None:
         log_level = getattr(logging, VERBOSE_MAP.get(min(verbose,3), ""), None)
         
         if not isinstance(log_level, int):
-            raise click.BadParameter()
+            raise click.BadParameter("Incorrect verbosity usage")
         
-        #HTTPConnection.debuglevel = 1 if log_level <= 20 else 0
+        HTTPConnection.debuglevel = 1 if log_level < 20 else 0
         #Set all the available loggers
         for key in logging.Logger.manager.loggerDict:
             logger = logging.getLogger(key)
