@@ -10,10 +10,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATH, LOGGER
+from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATHm LOGGER
 
 logger = logging.getLogger(LOGGER)
-
 
 class GithubConfig:
     """ Github Config object, holds information about username and bearer token
@@ -140,7 +139,7 @@ def encrypt_file(key: bytes, file: Path) -> None:
             raise Exception(
                 "InvalidKey: could not open your credentials file. Please try setting your credentials again."
             )
-    logging.debug(f"Successfully encrypted file {file}")
+    logger.debug(f"Successfully encrypted file {file}")
 
 
 def decrypt_file(key: bytes, file: Path) -> None:

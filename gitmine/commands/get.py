@@ -11,8 +11,6 @@ from gitmine.constants import LOGGER
 from gitmine.utils import catch_bad_responses
 
 logger = logging.getLogger(LOGGER)
-logging.basicConfig(level=logger.level)
-
 
 class GithubElement:
     """ Container for Github Issue or Pull Request.
