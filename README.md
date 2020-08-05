@@ -16,10 +16,13 @@ If you aren't a heavy user of Github or maybe only have one repository you focus
 ```
 Usage: gitmine [OPTIONS] COMMAND [ARGS]...
 
-  Simple CLI for querying assigned Issues and PR reviews from Github.
+  Simple command-line tool for querying assigned Issues and PR reviews from
+  Github.
 
 Options:
-  --help  Show this message and exit.
+  -v, --verbose  Give more output. Option is additive, and can be used up to
+                 three times.
+  --help         Show this message and exit.
 
 Commands:
   config  Set or Access Github Config information.
@@ -55,4 +58,4 @@ See [Contributing.md](Contributing.md)
 
 ## Common Errors and FAQ's
 
-* Running ```gitmine get prs``` with the wrong useranme will not error but return nothing
+* Running ```gitmine get prs``` with the wrong username will not error but return nothing
