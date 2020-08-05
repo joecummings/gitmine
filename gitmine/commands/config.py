@@ -4,7 +4,8 @@ import os
 from pathlib import Path
 
 import click
-from cryptography.exceptions import InvalidKey
+from cryptography.fernet import InvalidToken
+from cryptography.exceptions import InvalidSignature
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -135,7 +136,7 @@ def encrypt_file(key: bytes, file: Path) -> None:
     with open(file, "wb") as write_handle:
         try:
             write_handle.write(f.encrypt(data))
-        except InvalidKey:
+        except InvalidToken:
             raise Exception(
                 "InvalidKey: could not open your credentials file. Please try setting your credentials again."
             )
@@ -155,7 +156,7 @@ def decrypt_file(key: bytes, file: Path) -> None:
     with open(file, "w") as write_handle:
         try:
             write_handle.write(f.decrypt(data).decode("UTF-8"))
-        except InvalidKey:
+        except InvalidToken:
             raise Exception(
                 "InvalidKey: could not open your credentials file. Please try setting your credentials again."
             )

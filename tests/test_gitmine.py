@@ -1,16 +1,32 @@
+import logging
 from click.testing import CliRunner
 
 from gitmine.commands.config import get_or_create_github_config
-from gitmine.gitmine import config, get, go
+from gitmine.gitmine import gitmine, config, get, go
+from gitmine.constants import LOGGER
+
+logger = logging.getLogger(LOGGER)
 
 runner = CliRunner()
 
+#GITMINE - General
 
-def test_config_username_returns_specified():
-    result = runner.invoke(config, ["username"])
-    assert result.output == ""
+def test_gitmine_without_command():
+    result = runner.invoke(gitmine, [])
+    assert result.exit_code == 0 
 
+def test_gitmine_verbose():
+    result = runner.invoke(gitmine, ['-v', 'config', 'username', 'abc'])
+    assert result.exit_code == 0
+    assert logger.level ==  40
 
-def test_config_bad_prop_errors():
-    result = runner.invoke(config, ["banana-boat"])
-    assert result.exit_code == 2  # should fail
+def test_gitmine_vverbose():
+    result = runner.invoke(gitmine, ['-vv', 'config', 'username', 'abc'])
+    assert result.exit_code == 0
+    assert logger.level ==  20
+
+def test_gitmine_vvverbose():
+    result = runner.invoke(gitmine, ['-vvv', 'config', 'username', 'abc'])
+    assert result.exit_code == 0
+    assert logger.level == 10
+
