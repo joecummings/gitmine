@@ -6,46 +6,56 @@ from gitmine.utils import set_verbosity
 from gitmine.commands.config import config_command, get_or_create_github_config
 from gitmine.commands.get import get_command
 from gitmine.commands.go import go_command
+from gitmine.utils import set_verbosity
 
 @click.group()
 @click.option(
-    "-v", "--verbose",
+    "-v",
+    "--verbose",
     count=True,
-    help="Give more output. Option is additive, and can be used up to three times."
+    help="Give more output. Option is additive, and can be used up to three times.",
 )
 @click.pass_context
 def gitmine(ctx: click.Context, verbose: int):
     """ Simple CLI for querying assigned Issues and PR reviews from Github.
     """
     set_verbosity(verbose)
-    #Set the context object
+    # Set the context object
     ctx.obj = get_or_create_github_config()
+
 
 class StdCommand(click.core.Command):
     """
     A base class with common parameters
     Idea pulled from https://stackoverflow.com/questions/40182157/shared-options-and-flags-between-commands
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.params.insert(0, click.core.Option(
-            ("-v", "--verbose",),
-            count=True,
-            help="Give more output. Option is additive, and can be used up to three times."
-        ))
+        self.params.insert(
+            0,
+            click.core.Option(
+                ("-v", "--verbose",),
+                count=True,
+                help="Give more output. Option is additive, and can be used up to three times.",
+            ),
+        )
+
 
 @gitmine.command(cls=StdCommand)
 @click.option(
     "--encrypt/--no-encrypt",
     default=False,
-    help="Encrypt your credentials. Undo encryption by re-setting the config without the flag."
+    help="Encrypt your credentials. Undo encryption by re-setting the config without the flag.",
 )
 @click.argument(
     "prop", nargs=1, required=True, type=click.Choice(["username", "token"])
 )
 @click.argument("value", nargs=1, required=False, type=click.STRING)
 @click.pass_context
-def config(ctx: click.Context, prop: str, value: str, encrypt: bool, verbose: int) -> None:
+def config(
+    ctx: click.Context, prop: str, value: str, encrypt: bool, verbose: int
+) -> None:
     """ Set or Access Github Config information. Currently, config requires a Github username and Bearer token.
 
     [username|token] is the property to be set if *value* is also provided. If not, will return the current value of *prop* if it exists.\n
@@ -95,6 +105,7 @@ def go(ctx: click.Context, repo: str, number: Optional[int], verbose: int) -> No
 
 def main():
     gitmine(obj={})
+    
 
 if __name__ == "__main__":
     main()

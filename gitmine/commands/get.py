@@ -1,3 +1,4 @@
+import logging
 import re
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -6,12 +7,14 @@ from typing import Any, List, Mapping
 import click
 import requests
 
+from gitmine.constants import LOGGER
 from gitmine.utils import catch_bad_responses
 from gitmine.constants import LOGGER
 
-import logging
+
 logger = logging.getLogger(LOGGER)
 logging.basicConfig(level=logger.level)
+
 
 class GithubElement:
     """ Container for Github Issue or Pull Request.
@@ -191,8 +194,10 @@ def organize_and_echo_elements(projects: Mapping[str, Any], asc: bool) -> None:
 def get_command(ctx: click.Context, spec: str, color: bool, asc: bool) -> None:
     """ Implementation of the *get* command.
     """
-    logger.info(f"""Getting {spec} for {ctx.obj.get_value('username')}
-        from github.com with parameters: color={str(color)}, ascending={str(asc)} \n""")
+    logger.info(
+        f"""Getting {spec} for {ctx.obj.get_value('username')}
+        from github.com with parameters: color={str(color)}, ascending={str(asc)} \n"""
+    )
     headers = {"Authorization": f"Bearer {ctx.obj.get_value('token')}"}
     if spec == "issues":
         res = get_issues(headers=headers)

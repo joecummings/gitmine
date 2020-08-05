@@ -1,15 +1,18 @@
+import logging
+import logging.config
+
 import click
 
-try: 
+from gitmine.constants import LOGGER, LOGGER_PATH, VERBOSE_MAP
+
+try:
     from http.client import HTTPConnection
 except ImportError:
     from httplib import HTTPConnection
 
-from gitmine.constants import LOGGER, LOGGER_PATH, VERBOSE_MAP
 
-import logging
-import logging.config
 logging.config.fileConfig(LOGGER_PATH)
+
 
 def set_verbosity(verbose: int) -> None:
     """
@@ -18,18 +21,18 @@ def set_verbosity(verbose: int) -> None:
     """
     if verbose > 0:
 
-        log_level = getattr(logging, VERBOSE_MAP.get(min(verbose,3), ""), None)
-        
+        log_level = getattr(logging, VERBOSE_MAP.get(min(verbose, 3), ""), None)
+
         if not isinstance(log_level, int):
             raise click.BadParameter("Incorrect verbosity usage")
-        
+
         HTTPConnection.debuglevel = 1 if log_level < 20 else 0
-        #Set all the available loggers
+        # Set all the available loggers
         for key in logging.Logger.manager.loggerDict:
             logger = logging.getLogger(key)
             logger.setLevel(log_level)
 
- 
+
 def catch_bad_responses(res, **kwargs) -> None:
     """ Raise error code if response is not 200 OK
     """
