@@ -167,7 +167,7 @@ def print_issues(issues: List[Mapping[str, Any]], color: bool, asc: bool) -> Non
             )
         )
 
-    organize_and_echo_elements(projects, asc)
+    return organize_and_echo_elements(projects, asc)
 
 
 def organize_and_echo_elements(projects: Mapping[str, Any], asc: bool) -> None:
@@ -185,11 +185,12 @@ def organize_and_echo_elements(projects: Mapping[str, Any], asc: bool) -> None:
     string = ""
     for project, elements in projects.items():
         click.echo(project)
-        string += repr(project)
+        string += project
         for element in elements:
             click.echo(element)
-            string += repr(element)
+            string += element.__repr__()
         click.echo()
+    return string
 
 
 def get_command(ctx: click.Context, spec: str, color: bool, asc: bool) -> None:

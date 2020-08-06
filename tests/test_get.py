@@ -4,25 +4,26 @@ from typing import Dict
 import click
 import pytest
 from click.testing import CliRunner
+from test_constants import TEST_ISSUES_PATH, TEST_PRS_PATH
 
 from gitmine.commands.get import print_issues, print_prs
 from gitmine.gitmine import gitmine  # gitmine?
-from test_constants import TEST_ISSUES_PATH, TEST_PRS_PATH
 
 runner = CliRunner()
 
-test_issues: Dict[str, str] = {}
-test_prs: Dict[str, str] = {}
-
-
-@pytest.fixture
+@pytest.fixture(scope="module")
 def get_configuration():
-
+    data = {}
+    
     with open(TEST_ISSUES_PATH, "r") as issues_handle:
-        test_issue = json.load(issues_handle)  #'response': ... 'output': ....
-    with open(TEST_PRS_PATH, "r") as prs_handle:
-        test_prs = json.load(prs_handle)
+        issue_data = json.load(issues_handle) 
+        data["issue"] = issue_data["issues"]
+        data["issue_output"] = issue_data["print_output"]
 
+    with open(TEST_PRS_PATH, "r") as prs_handle:
+        issue_data = json.load(prs_handle)
+
+    yield data
 
 def base_runner(options):
     command = ["get"]
@@ -36,19 +37,22 @@ def test_get_none():
 
 
 def test_get_bad_argument():
-    with pytest.raises(click.BadArgumentUsage):
-        result = base_runner(["banana-boat"])
+    result = base_runner(["banana-boat"])
     assert result.exit_code == 2
 
 
 def test_get_bad_argument2():
-    with pytest.raises(click.BadArgumentUsage):
-        result = base_runner(["banana-boat"])
+    result = base_runner(["banana-boat"])
     assert result.exit_code == 2
 
 
 def test_get_issues_option_asc_color():
-    pass
+    with open(TEST_ISSUES_PATH, 'r') as issues_handle:
+        json_dict = json.load(issues_handle)
+        issues = json_dict['issues']
+        print_output = json_dict['print_output']['11']
+    result = runner.invoke(print_issues, issues)
+    assert result.output == print_output
 
 
 def test_get_issues_option_asc_nocolor():

@@ -1,7 +1,7 @@
 from pathlib import Path
 
-TEST_GITHUB_CREDENTIALS_PATH = Path.home() / Path(".gitmine_credentials")
-TEST_KEY_PATH = Path(__file__).parents[1] / Path("gitmine.key")
+GITHUB_CREDENTIALS_PATH_COPY = Path(__file__).parent / Path(".gitmine_credentials")
+KEY_PATH_COPY = Path(__file__).parent / Path("gitmine.key")
 
-TEST_ISSUES_PATH = Path(__file__) / Path("data/issues.json")
-TEST_PRS_PATH = Path(__file__) / Path("data/prs.json ")
+TEST_ISSUES_PATH = Path(__file__).parent / Path("data/issues.json")
+TEST_PRS_PATH = Path(__file__).parent / Path("data/prs.json ")
