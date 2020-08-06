@@ -11,12 +11,13 @@ from gitmine.gitmine import gitmine  # gitmine?
 
 runner = CliRunner()
 
+
 @pytest.fixture(scope="module")
 def get_configuration():
     data = {}
-    
+
     with open(TEST_ISSUES_PATH, "r") as issues_handle:
-        issue_data = json.load(issues_handle) 
+        issue_data = json.load(issues_handle)
         data["issue"] = issue_data["issues"]
         data["issue_output"] = issue_data["print_output"]
 
@@ -24,6 +25,7 @@ def get_configuration():
         issue_data = json.load(prs_handle)
 
     yield data
+
 
 def base_runner(options):
     command = ["get"]
@@ -47,10 +49,10 @@ def test_get_bad_argument2():
 
 
 def test_get_issues_option_asc_color():
-    with open(TEST_ISSUES_PATH, 'r') as issues_handle:
+    with open(TEST_ISSUES_PATH, "r") as issues_handle:
         json_dict = json.load(issues_handle)
-        issues = json_dict['issues']
-        print_output = json_dict['print_output']['11']
+        issues = json_dict["issues"]
+        print_output = json_dict["print_output"]["11"]
     result = runner.invoke(print_issues, issues)
     assert result.output == print_output
 

@@ -5,8 +5,12 @@ from click.testing import CliRunner
 from cryptography.fernet import Fernet
 from test_constants import GITHUB_CREDENTIALS_PATH_COPY, KEY_PATH_COPY
 
-from gitmine.commands.config import (decrypt_file, encrypt_file, generate_key,
-                                     get_or_create_github_config)
+from gitmine.commands.config import (
+    decrypt_file,
+    encrypt_file,
+    generate_key,
+    get_or_create_github_config,
+)
 from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATH
 from gitmine.gitmine import gitmine
 
@@ -24,7 +28,7 @@ def file_config():
     if key_flag:
         shutil.move(KEY_PATH, KEY_PATH_COPY)
     yield
-    #GITHUB_CREDENTIALS_PATH.unlink()
+    # GITHUB_CREDENTIALS_PATH.unlink()
     KEY_PATH.unlink()
     shutil.move(GITHUB_CREDENTIALS_PATH_COPY, GITHUB_CREDENTIALS_PATH)
     if key_flag:
@@ -99,4 +103,3 @@ def test_config_option_encrypt_invalidKey(file_config):
     new_key = Fernet.generate_key()
     with pytest.raises(Exception, match=r"InvalidKey:.*"):
         decrypt_file(new_key, GITHUB_CREDENTIALS_PATH)
-
