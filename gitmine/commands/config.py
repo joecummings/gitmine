@@ -2,11 +2,11 @@ import base64
 import logging
 import os
 from pathlib import Path
+from typing import Union
 
 import click
-from cryptography.fernet import InvalidToken
 from cryptography.exceptions import InvalidSignature
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -14,6 +14,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATH, LOGGER
 
 logger = logging.getLogger(LOGGER)
+
 
 class GithubConfig:
     """ Github Config object, holds information about username and bearer token
@@ -33,7 +34,7 @@ class GithubConfig:
             return self.username
         raise click.BadArgumentUsage(message=f"Unknown property specified: {prop}")
 
-    def set_prop(self, prop: str, value: str) -> None:
+    def set_prop(self, prop: str, value: Union[str, bytes]) -> None:
         if prop == "key":
             self.key = value
         elif prop == "token":
