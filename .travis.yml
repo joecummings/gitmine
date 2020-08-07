@@ -12,4 +12,4 @@ script:
     - echo "python version $(python --version) running"
     - echo "pip version $(pip --version) running"
     - pytest tests/
-    - mypy --no-strict-optional --ignore-missing-imports
+    - mypy gitmine/ tests/ --no-strict-optional --ignore-missing-imports
