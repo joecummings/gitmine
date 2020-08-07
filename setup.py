@@ -2,7 +2,7 @@ import re
 
 from setuptools import find_packages, setup
 
-version = "0.0.3"
+version = "0.0.7b"
 
 
 long_descr = open("README.md").read()
@@ -21,6 +21,7 @@ setup(
     packages=find_packages(),
     entry_points={"console_scripts": ["gitmine = gitmine.gitmine:main"]},
     install_requires=install_requires,
+    include_package_data=True,
     python_requires=">=3.6",
     version=version,
     license="MIT",

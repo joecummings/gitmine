@@ -89,7 +89,7 @@ def test_config_option_encrypt_correct(file_config):
     with open(GITHUB_CREDENTIALS_PATH, "rb") as cred_handle:
         data = cred_handle.read()
         decrypted = f.decrypt(data).decode("UTF-8").split("\n")[0]
-        prop, d_name = decrypted.split()
+        _, d_name = decrypted.split()
 
     assert name == d_name
 
