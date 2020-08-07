@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/joecummings/gitmine.svg?branch=master)](https://travis-ci.com/joecummings/gitmine)
+
 # gitmine
 
 Stop getting buried under countless Github Issues and PRs. Organize, reference, and close with ease.
