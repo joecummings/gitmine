@@ -61,6 +61,11 @@ def test_get_issues(capsys):
     #     assert issue in print_output
 
 
+def test_get_issues_spec_repo():
+    # specify repository to pull from and make sure only those get returned
+    pass
+
+
 def test_get_issues_option_asc_nocolor():
     pass
 

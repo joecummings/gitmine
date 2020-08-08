@@ -103,7 +103,7 @@ def get_prs(ctx: click.Context, headers: Mapping[str, str]) -> List[Mapping[str,
     return response.json()["items"]
 
 
-def print_prs(prs: List[Mapping[str, Any]], color: bool, asc: bool) -> None:
+def print_prs(prs: List[Mapping[str, Any]], color: bool, asc: bool, repo: str) -> None:
     """ Print PRs in the following format:
 
     repo-title
@@ -118,6 +118,8 @@ def print_prs(prs: List[Mapping[str, Any]], color: bool, asc: bool) -> None:
     for pr in prs:
         url = pr["html_url"]
         curr_project = re.findall(r"github.com/(.+?)/pull", url)[0]
+        if repo and curr_project != repo:
+            continue
         projects[curr_project].append(
             PullRequest(
                 title=pr["title"],
@@ -142,7 +144,9 @@ def get_issues(headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
     return response.json()
 
 
-def print_issues(issues: List[Mapping[str, Any]], color: bool, asc: bool) -> None:
+def print_issues(
+    issues: List[Mapping[str, Any]], color: bool, asc: bool, repo: str
+) -> None:
     """ Print issues in the following format:
 
     repo-title
@@ -156,6 +160,8 @@ def print_issues(issues: List[Mapping[str, Any]], color: bool, asc: bool) -> Non
 
     for issue in issues:
         curr_project = issue["repository"]["full_name"]
+        if repo and curr_project != repo:
+            continue
         projects[curr_project].append(
             Issue(
                 title=issue["title"],
@@ -189,7 +195,9 @@ def organize_and_echo_elements(projects: Mapping[str, Any], asc: bool) -> None:
         click.echo()
 
 
-def get_command(ctx: click.Context, spec: str, color: bool, asc: bool) -> None:
+def get_command(
+    ctx: click.Context, spec: str, color: bool, asc: bool, repo: str
+) -> None:
     """ Implementation of the *get* command.
     """
     logger.info(
@@ -199,15 +207,15 @@ def get_command(ctx: click.Context, spec: str, color: bool, asc: bool) -> None:
     headers = {"Authorization": f"Bearer {ctx.obj.get_value('token')}"}
     if spec == "issues":
         res = get_issues(headers=headers)
-        print_issues(res, color, asc)
+        print_issues(res, color, asc, repo)
     elif spec == "prs":
         res = get_prs(ctx, headers=headers)
-        print_prs(res, color, asc)
+        print_prs(res, color, asc, repo)
     elif spec == "all":
         res = get_issues(headers=headers)
-        print_issues(res, color, asc)
+        print_issues(res, color, asc, repo)
         click.echo(f"* " * 20)
         res = get_prs(ctx, headers=headers)
-        print_prs(res, color, asc)
+        print_prs(res, color, asc, repo)
     else:
         raise click.BadArgumentUsage(message=f"Unkown spec: {spec}")

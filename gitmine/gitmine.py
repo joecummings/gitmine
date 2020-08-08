@@ -74,19 +74,22 @@ def config(
 @click.option(
     "--asc/--desc",
     default=False,
-    help="Print Issues/PRs in ascending/descending order of elapsed time",
+    help="Print Issues/PRs in ascending/descending order of elapsed time.",
 )
+@click.option("--repo", help="Specify a repo from which to get Issues / PRs.")
 @click.argument(
     "spec", nargs=1, required=True, type=click.Choice(["issues", "prs", "all"])
 )
 @click.pass_context
-def get(ctx: click.Context, spec: str, color: bool, asc: bool, verbose: int) -> None:
+def get(
+    ctx: click.Context, spec: str, color: bool, asc: bool, repo: str, verbose: int
+) -> None:
     """ Get assigned Github Issues and/or Github PRs.
 
     [issues|prs|all] is what information to pull. Can be {issues, prs, all}.
     """
     set_verbosity(verbose)
-    get_command(ctx, spec, color, asc)
+    get_command(ctx, spec, color, asc, repo)
 
 
 @gitmine.command(cls=StdCommand)
