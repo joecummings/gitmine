@@ -131,22 +131,23 @@ def print_prs(prs: List[Mapping[str, Any]], color: bool, asc: bool, repo: str) -
             )
         )
 
-    organize_and_echo_elements(projects, asc)
+    echo_elements(projects)
 
 
-def get_issues(headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
+def get_issues(
+    unassigned: bool, asc: bool, headers: Mapping[str, str]
+) -> List[Mapping[str, Any]]:
     """ Get all Github Issues assigned to user.
     """
+    params = {"direction": "asc"} if asc else {"direction": "desc"}
     logger.debug(f"Fetching issues from github.com \n")
     url_format = "https://api.github.com/issues"
-    response = requests.get(url_format, headers=headers)
+    response = requests.get(url_format, headers=headers, params=params)
     catch_bad_responses(response, get="issues")
     return response.json()
 
 
-def print_issues(
-    issues: List[Mapping[str, Any]], color: bool, asc: bool, repo: str
-) -> None:
+def print_issues(issues: List[Mapping[str, Any]], color: bool, repo: str) -> None:
     """ Print issues in the following format:
 
     repo-title
@@ -173,20 +174,12 @@ def print_issues(
             )
         )
 
-    organize_and_echo_elements(projects, asc)
+    echo_elements(projects)
 
 
-def organize_and_echo_elements(projects: Mapping[str, Any], asc: bool) -> None:
-    """ Sort elements according to *asc* and print to stdout.
+def echo_elements(projects: Mapping[str, Any]) -> None:
+    """ Print to stdout.
     """
-
-    reverse_bool = True if asc else False
-    projects = {
-        project: sorted(
-            elements, key=lambda elem: elem.elapsed_time, reverse=reverse_bool
-        )
-        for project, elements in projects.items()
-    }
 
     for project, elements in projects.items():
         click.echo(project)
@@ -196,7 +189,7 @@ def organize_and_echo_elements(projects: Mapping[str, Any], asc: bool) -> None:
 
 
 def get_command(
-    ctx: click.Context, spec: str, color: bool, asc: bool, repo: str
+    ctx: click.Context, spec: str, color: bool, asc: bool, repo: str, unassigned: bool
 ) -> None:
     """ Implementation of the *get* command.
     """
@@ -206,14 +199,14 @@ def get_command(
     )
     headers = {"Authorization": f"Bearer {ctx.obj.get_value('token')}"}
     if spec == "issues":
-        res = get_issues(headers=headers)
-        print_issues(res, color, asc, repo)
+        res = get_issues(unassigned, asc, headers=headers)
+        print_issues(res, color, repo)
     elif spec == "prs":
         res = get_prs(ctx, headers=headers)
         print_prs(res, color, asc, repo)
     elif spec == "all":
-        res = get_issues(headers=headers)
-        print_issues(res, color, asc, repo)
+        res = get_issues(unassigned, asc, headers=headers)
+        print_issues(res, color, repo)
         click.echo(f"* " * 20)
         res = get_prs(ctx, headers=headers)
         print_prs(res, color, asc, repo)

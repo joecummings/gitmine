@@ -2,7 +2,7 @@ import re
 
 from setuptools import find_packages, setup
 
-version = "0.0.7b"
+version = "0.0.8"
 
 
 long_descr = open("README.md").read()
