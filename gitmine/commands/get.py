@@ -40,9 +40,9 @@ class GithubElement:
         if not self.color_coded:
             return "white"
 
-        if self.elapsed_time < timedelta(days=1):
+        if self.elapsed_time < timedelta(days=2):
             return "green"
-        if self.elapsed_time < timedelta(days=3):
+        if self.elapsed_time < timedelta(days=5):
             return "yellow"
         return "red"
 

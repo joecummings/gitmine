@@ -104,7 +104,7 @@ def get(
 ) -> None:
     """ Get assigned Github Issues and/or Github PRs.
 
-    [issues|prs|all] is what information to pull. Can be {issues, prs, all}.
+    [issues|prs|all] is what information to pull.
     """
     set_verbosity(verbose)
     get_command(ctx, spec, color, asc, repo, unassigned)
