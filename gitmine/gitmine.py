@@ -87,20 +87,38 @@ def config(
     default=False,
     help="Print Issues/PRs in ascending/descending order of elapsed time.",
 )
-@click.option("--repo", help="Specify a repo from which to get Issues / PRs.")
+@click.option(
+    "--repo",
+    "-r",
+    type=click.STRING,
+    help="Specify a repo from which to get Issues / PRs.",
+)
+@click.option(
+    "--unassigned",
+    "-u",
+    is_flag=True,
+    default=False,
+    help="Get all unassigned Issues / PRs from your repositories.",
+)
 @click.argument(
     "spec", nargs=1, required=True, type=click.Choice(["issues", "prs", "all"])
 )
 @click.pass_context
 def get(
-    ctx: click.Context, spec: str, color: bool, asc: bool, repo: str, verbose: int
+    ctx: click.Context,
+    spec: str,
+    color: bool,
+    asc: bool,
+    repo: str,
+    unassigned: bool,
+    verbose: int,
 ) -> None:
     """ Get assigned Github Issues and/or Github PRs.
 
     [issues|prs|all] is what information to pull. Can be {issues, prs, all}.
     """
     set_verbosity(verbose)
-    get_command(ctx, spec, color, asc, repo)
+    get_command(ctx, spec, color, asc, repo, unassigned)
 
 
 @gitmine.command(cls=StdCommand)
