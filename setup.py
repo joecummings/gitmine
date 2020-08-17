@@ -2,7 +2,7 @@ import re
 
 from setuptools import find_packages, setup
 
-from gitmine.version.version import __version__
+from gitmine.version import __version__
 
 long_descr = open("README.md").read()
 
