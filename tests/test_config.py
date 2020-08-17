@@ -1,12 +1,15 @@
 import shutil
+from pathlib import Path
 
+import click
 import pytest
 from click.testing import CliRunner
 from cryptography.fernet import Fernet
 from test_constants import GITHUB_CREDENTIALS_PATH_COPY, KEY_PATH_COPY
 
-from gitmine.commands.config import (decrypt_file, encrypt_file, generate_key,
-                                     get_or_create_github_config)
+from gitmine.commands.config import (decrypt_file, encrypt_file,
+                                     get_or_create_github_config,
+                                     open_credentials)
 from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATH
 from gitmine.gitmine import gitmine
 
@@ -71,18 +74,19 @@ def test_config_bad_prop_errors(file_config):
 
 
 def test_config_option_encrypt_key(file_config):
-    base_runner(["username", "abc", "--encrypt"])
+    base_runner(["--encrypt"])
     assert KEY_PATH.exists()
 
 
 def test_config_option_encrypt_nokey(file_config):
-    base_runner(["username", "abc", "--no-encrypt"])
+    base_runner(["--decrypt"])
     assert not KEY_PATH.exists()
 
 
 def test_config_option_encrypt_correct(file_config):
     name = "abc"
-    base_runner(["username", name, "--encrypt"])
+    base_runner(["username", name])
+    base_runner(["--encrypt"])
     with open(KEY_PATH, "rb") as key_handle:
         key = key_handle.read()
     f = Fernet(key)
@@ -96,7 +100,7 @@ def test_config_option_encrypt_correct(file_config):
 
 def test_config_option_encrypt_invalidKey(file_config):
     token = "abcdefg"
-    base_runner(["token", token, "--encrypt"])
+    base_runner(["token", token])
     # Generate new key and delete key file
     new_key = Fernet.generate_key()
     with pytest.raises(Exception, match=r"InvalidKey:.*"):

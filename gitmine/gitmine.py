@@ -7,6 +7,8 @@ from gitmine.commands.get import get_command
 from gitmine.commands.go import go_command
 from gitmine.utils import set_verbosity
 
+__version__ = "0.0.8"
+
 
 @click.group()
 @click.option(
@@ -15,6 +17,7 @@ from gitmine.utils import set_verbosity
     count=True,
     help="Give more output. Option is additive, and can be used up to three times.",
 )
+@click.version_option(__version__)
 @click.pass_context
 def gitmine(ctx: click.Context, verbose: int):
     """ Simple CLI for querying assigned Issues and PR reviews from Github.
@@ -44,17 +47,26 @@ class StdCommand(click.core.Command):
 
 @gitmine.command(cls=StdCommand)
 @click.option(
-    "--encrypt/--no-encrypt",
+    "--encrypt", is_flag=True, default=False, help="Encrypt your credentials.",
+)
+@click.option(
+    "--decrypt",
+    is_flag=True,
     default=False,
-    help="Encrypt your credentials. Undo encryption by re-setting the config without the flag.",
+    help="Decrypt your credentials if previously encrypted",
 )
 @click.argument(
-    "prop", nargs=1, required=True, type=click.Choice(["username", "token"])
+    "prop", nargs=1, required=False, type=click.Choice(["username", "token"])
 )
 @click.argument("value", nargs=1, required=False, type=click.STRING)
 @click.pass_context
 def config(
-    ctx: click.Context, prop: str, value: str, encrypt: bool, verbose: int
+    ctx: click.Context,
+    prop: str,
+    value: str,
+    encrypt: bool,
+    decrypt: bool,
+    verbose: int,
 ) -> None:
     """ Set or Access Github Config information. Currently, config requires a Github username and Bearer token.
 
@@ -62,7 +74,7 @@ def config(
     VALUE is the value of property to be set.
     """
     set_verbosity(verbose)
-    config_command(ctx, prop, value, encrypt)
+    config_command(ctx, prop, value, encrypt, decrypt)
 
 
 @gitmine.command(cls=StdCommand)
