@@ -28,15 +28,13 @@ class GithubConfig:
         self.username = None
         self.key = None
 
-    def get_value(self, prop: Union[str, None]) -> str:
+    def get_value(self, prop: str) -> str:
         if prop == "key":
             return self.key
         elif prop == "token":
             return self.token
         elif prop == "username":
             return self.username
-        elif prop == None:
-            return ""
         raise click.BadArgumentUsage(message=f"Unknown property specified: {prop}")
 
     def set_prop(self, prop: str, value: Union[str, bytes]) -> None:
@@ -57,10 +55,10 @@ def config_command(
     """
     handle_encrypt_option(encrypt, decrypt)
 
-    if not value:
+    if not value and prop:
         click.echo(ctx.obj.get_value(prop))
 
-    else:
+    elif value:
         ctx.obj.set_prop(prop, value)
 
         with open_credentials("r") as read_handle:
@@ -108,7 +106,7 @@ class open_credentials(object):
 
     def __enter__(self):
         self.file_obj = open(self.file_name, self.method)
-        if len(self.file_obj.read().split()) == 1:
+        if len(self.file_obj.read().split()) == 1 and not key_exists:
             raise click.FileError(
                 f"MissingKey: Credentials file is currently encrypted and the key is missing, please try resetting your credentials file"
             )
