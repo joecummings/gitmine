@@ -6,8 +6,7 @@ from gitmine.commands.config import config_command, get_or_create_github_config
 from gitmine.commands.get import get_command
 from gitmine.commands.go import go_command
 from gitmine.utils import set_verbosity
-
-__version__ = "0.0.8"
+from gitmine.version.version import __version__
 
 
 @click.group()
