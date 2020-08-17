@@ -51,12 +51,11 @@ class GithubConfig:
 
 
 def config_command(
-    ctx: click.Context, prop: str, value: str, encrypt: Union[bool, None]
+    ctx: click.Context, prop: str, value: str, encrypt: bool, decrypt: bool
 ) -> None:
     """ Implementation of the *config* command
     """
-
-    handle_encrypt_option(encrypt)
+    handle_encrypt_option(encrypt, decrypt)
 
     if not value:
         click.echo(ctx.obj.get_value(prop))
@@ -123,28 +122,34 @@ class open_credentials(object):
         self.file_obj.close()
 
 
-def handle_encrypt_option(e: Union[bool, None]):
+def handle_encrypt_option(e: bool, d: bool):
     """Encryption can be True or False as specified by the user parameter:
         True: we generate a key and encrypt the credentials file using Fernet Encryption
         False: if the file is currently encrypted - we decrypt it and delete the key
         None: return
     """
-    if e is None:
-        return
 
-    if KEY_PATH.exists():
+    key_exists = KEY_PATH.exists()
+    if key_exists:
         with open(KEY_PATH, "rb") as read_handle:
             key = read_handle.read()
-    else:
-        key = Fernet.generate_key()
-        with open(KEY_PATH, "wb") as write_handle:
-            write_handle.write(key)
-        logger.debug(f"Generated encryption key, stored at {KEY_PATH}")
 
+    # Encrypt the file
     if e == True:
+        if not key_exists:
+            key = Fernet.generate_key()
+            with open(KEY_PATH, "wb") as write_handle:
+                write_handle.write(key)
+            logger.debug(f"Generated encryption key, stored at {KEY_PATH}")
         encrypt_file(key, GITHUB_CREDENTIALS_PATH)
 
-    elif e == False:
+    # Decrypt the file
+    if d == True:
+        if not key_exists:
+            raise click.BadOptionUsage(
+                option_name="--decrypt",
+                message="cannot be used when file is already decrypted",
+            )
         decrypt_file(key, GITHUB_CREDENTIALS_PATH)
         KEY_PATH.unlink()
 
