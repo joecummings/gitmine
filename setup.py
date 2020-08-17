@@ -2,8 +2,7 @@ import re
 
 from setuptools import find_packages, setup
 
-version = "0.0.7b"
-
+from gitmine.version.version import __version__
 
 long_descr = open("README.md").read()
 
@@ -23,7 +22,7 @@ setup(
     install_requires=install_requires,
     include_package_data=True,
     python_requires=">=3.6",
-    version=version,
+    version=__version__,
     license="MIT",
     url="https://github.com/joecummings/gitmine",
     description="Simple command-line app for querying assigned Issues and PRs from Github.",
