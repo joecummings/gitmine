@@ -106,7 +106,7 @@ class open_credentials(object):
 
     def __enter__(self):
         self.file_obj = open(self.file_name, self.method)
-        if len(self.file_obj.read().split()) == 1 and not key_exists:
+        if len(self.file_obj.read().split()) == 1 and not self.key_exists:
             raise click.FileError(
                 f"MissingKey: Credentials file is currently encrypted and the key is missing, please try resetting your credentials file"
             )
