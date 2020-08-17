@@ -34,3 +34,10 @@ def test_gitmine_vvverbose():
     result = runner.invoke(gitmine, ["-vvv", "config", "username", "abc"])
     assert result.exit_code == 0
     assert logger.level == 10
+
+
+def test_get_version():
+    from gitmine.version import __version__
+
+    result = runner.invoke(gitmine, ["--version"])
+    assert result.output == f"gitmine, version {__version__}\n"
