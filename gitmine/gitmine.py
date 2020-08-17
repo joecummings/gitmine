@@ -8,8 +8,6 @@ from gitmine.commands.go import go_command
 from gitmine.utils import set_verbosity
 from gitmine.version.version import __version__
 
-__version__ = "0.0.8"
-
 
 @click.group()
 @click.option(
