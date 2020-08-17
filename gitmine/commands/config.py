@@ -111,7 +111,7 @@ class open_credentials(object):
         self.file_obj = open(self.file_name, self.method)
         if len(self.file_obj.read().split()) == 1:
             raise click.FileError(
-                f"Credentials file is currently encrypted and the key is missing, please try resetting your credentials file"
+                f"MissingKey: Credentials file is currently encrypted and the key is missing, please try resetting your credentials file"
             )
         # reset file pointer
         self.file_obj.seek(0)
