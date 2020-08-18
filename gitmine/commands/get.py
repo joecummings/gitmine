@@ -134,7 +134,7 @@ def print_prs(prs: List[Mapping[str, Any]], color: bool, asc: bool, repo: str) -
     echo_elements(projects, len(prs))
 
 
-def get_collaborator_repos(headers: Mapping[str, str]) -> Mapping[str, Any]:
+def get_collaborator_repos(headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
     url_format = "https://api.github.com/user/repos"
     params = {"affiliation": "collaborator"}
     response = requests.get(url_format, headers=headers, params=params)
