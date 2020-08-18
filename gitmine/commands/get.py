@@ -1,16 +1,22 @@
+import concurrent.futures
 import logging
 import re
+import threading
+import time
 from collections import defaultdict
 from datetime import datetime, timedelta
+from itertools import chain
 from typing import Any, List, Mapping
 
 import click
+import numpy as np
 import requests
 
 from gitmine.constants import LOGGER
 from gitmine.utils import catch_bad_responses
 
 logger = logging.getLogger(LOGGER)
+thread_local = threading.local()
 
 
 class GithubElement:
@@ -142,25 +148,32 @@ def get_collaborator_repos(headers: Mapping[str, str]) -> List[Mapping[str, Any]
     return response.json()
 
 
+def get_session():
+    if not hasattr(thread_local, "session"):
+        thread_local.session = requests.Session()
+    return thread_local.session
+
+
 def get_unassigned_issues(
     asc: bool, headers: Mapping[str, str]
 ) -> List[Mapping[str, Any]]:
     params = {"direction": "asc" if asc else "desc", "assignee": "none"}
     collaborator_repos = get_collaborator_repos(headers)
-    url_format = "https://api.github.com/repos"
-    issues = []
-    for repo in collaborator_repos:
-        # make this multithreaded
-        # print(repo["full_name"])
-        specific_url_format = f"{url_format}/{repo['full_name']}/issues"
-        response = requests.get(specific_url_format, headers=headers, params=params)
-        # print(response.json())
-        catch_bad_responses(response, get="issues")
-        if response.json():
+
+    def download_issues(repo: Mapping[str, Any]) -> List[Mapping[str, Any]]:
+        session = get_session()
+        url = f"https://api.github.com/repos/{repo['full_name']}/issues"
+        with session.get(url, headers=headers, params=params) as response:
+            issues = []
             for issue in response.json():
                 issue["repository"] = {"full_name": repo["full_name"]}
                 issues.append(issue)
-    return issues
+            return issues
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        issues = filter(lambda x: x, executor.map(download_issues, collaborator_repos))
+
+    return list(chain.from_iterable(issues))
 
 
 def get_issues(
@@ -244,6 +257,7 @@ def get_command(
     headers = {"Authorization": f"Bearer {ctx.obj.get_value('token')}"}
     if spec == "issues":
         res = get_issues(unassigned, asc, headers=headers)
+
         print_issues(res, color, repo)
     elif spec == "prs":
         res = get_prs(ctx, headers=headers)
