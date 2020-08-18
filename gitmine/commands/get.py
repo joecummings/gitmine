@@ -131,7 +131,36 @@ def print_prs(prs: List[Mapping[str, Any]], color: bool, asc: bool, repo: str) -
             )
         )
 
-    echo_elements(projects)
+    echo_elements(projects, len(prs))
+
+
+def get_collaborator_repos(headers: Mapping[str, str]) -> Mapping[str, Any]:
+    url_format = "https://api.github.com/user/repos"
+    params = {"affiliation": "collaborator"}
+    response = requests.get(url_format, headers=headers, params=params)
+    catch_bad_responses(response, get="issues")
+    return response.json()
+
+
+def get_unassigned_issues(
+    asc: bool, headers: Mapping[str, str]
+) -> List[Mapping[str, Any]]:
+    params = {"direction": "asc" if asc else "desc", "assignee": "none"}
+    collaborator_repos = get_collaborator_repos(headers)
+    url_format = "https://api.github.com/repos"
+    issues = []
+    for repo in collaborator_repos:
+        # make this multithreaded
+        # print(repo["full_name"])
+        specific_url_format = f"{url_format}/{repo['full_name']}/issues"
+        response = requests.get(specific_url_format, headers=headers, params=params)
+        # print(response.json())
+        catch_bad_responses(response, get="issues")
+        if response.json():
+            for issue in response.json():
+                issue["repository"] = {"full_name": repo["full_name"]}
+                issues.append(issue)
+    return issues
 
 
 def get_issues(
@@ -139,6 +168,11 @@ def get_issues(
 ) -> List[Mapping[str, Any]]:
     """ Get all Github Issues assigned to user.
     """
+
+    if unassigned:
+        print("getting unassigned")
+        return get_unassigned_issues(asc, headers)
+
     params = {"direction": "asc"} if asc else {"direction": "desc"}
     logger.debug(f"Fetching issues from github.com \n")
     url_format = "https://api.github.com/issues"
@@ -174,18 +208,28 @@ def print_issues(issues: List[Mapping[str, Any]], color: bool, repo: str) -> Non
             )
         )
 
-    echo_elements(projects)
+    echo_elements(projects, len(issues))
 
 
-def echo_elements(projects: Mapping[str, Any]) -> None:
+def echo_elements(projects: Mapping[str, Any], num_of_issues: int) -> None:
     """ Print to stdout.
     """
 
-    for project, elements in projects.items():
-        click.echo(project)
-        for element in elements:
-            click.echo(element)
-        click.echo()
+    if num_of_issues > 20:
+        joined_str = []
+        for project, elements in projects.items():
+            joined_str.append(project)
+            for elem in elements:
+                joined_str.append(str(elem))
+            joined_str.append("\n")
+        join_elements = "\n".join(joined_str)
+        click.echo_via_pager(join_elements)
+    else:
+        for project, elements in projects.items():
+            click.echo(project)
+            for element in elements:
+                click.echo(element)
+            click.echo()
 
 
 def get_command(
