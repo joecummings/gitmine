@@ -9,7 +9,6 @@ from itertools import chain
 from typing import Any, List, Mapping
 
 import click
-import numpy as np
 import requests
 
 from gitmine.constants import LOGGER
@@ -17,6 +16,12 @@ from gitmine.utils import catch_bad_responses
 
 logger = logging.getLogger(LOGGER)
 thread_local = threading.local()
+
+
+def get_session():
+    if not hasattr(thread_local, "session"):
+        thread_local.session = requests.Session()
+    return thread_local.session
 
 
 class GithubElement:
@@ -140,30 +145,33 @@ def print_prs(prs: List[Mapping[str, Any]], color: bool, asc: bool, repo: str) -
     echo_elements(projects, len(prs))
 
 
-def get_collaborator_repos(headers: Mapping[str, str]) -> List[Mapping[str, Any]]:
-    url_format = "https://api.github.com/user/repos"
-    params = {"affiliation": "collaborator"}
-    response = requests.get(url_format, headers=headers, params=params)
-    catch_bad_responses(response, get="issues")
-    return response.json()
-
-
-def get_session():
-    if not hasattr(thread_local, "session"):
-        thread_local.session = requests.Session()
-    return thread_local.session
-
-
 def get_unassigned_issues(
     asc: bool, headers: Mapping[str, str]
 ) -> List[Mapping[str, Any]]:
-    params = {"direction": "asc" if asc else "desc", "assignee": "none"}
-    collaborator_repos = get_collaborator_repos(headers)
+    """ Get all Github Issues that are unnassigned from the repos in which user is a collaborator.
+    """
 
-    def download_issues(repo: Mapping[str, Any]) -> List[Mapping[str, Any]]:
+    def get_collaborator_repos() -> List[Mapping[str, Any]]:
+        """ Get all Github repos where user is classified as a collaborator.
+        """
+
+        url = "https://api.github.com/user/repos"
+        params = {"affiliation": "collaborator"}
+        response = requests.get(url, headers=headers, params=params)
+        catch_bad_responses(response, get="repos")
+        return response.json()
+
+    collaborator_repos = get_collaborator_repos()
+    params = {"direction": "asc" if asc else "desc", "assignee": "none"}
+
+    def get_issues_by_repo(repo: Mapping[str, Any]) -> List[Mapping[str, Any]]:
+        """ Get all Github Issues in a repo specified by params.
+        """
+
         session = get_session()
         url = f"https://api.github.com/repos/{repo['full_name']}/issues"
         with session.get(url, headers=headers, params=params) as response:
+            catch_bad_responses(response, get="issues")
             issues = []
             for issue in response.json():
                 issue["repository"] = {"full_name": repo["full_name"]}
@@ -171,7 +179,9 @@ def get_unassigned_issues(
             return issues
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        issues = filter(lambda x: x, executor.map(download_issues, collaborator_repos))
+        issues = filter(
+            lambda x: x, executor.map(get_issues_by_repo, collaborator_repos)
+        )
 
     return list(chain.from_iterable(issues))
 
@@ -183,7 +193,7 @@ def get_issues(
     """
 
     if unassigned:
-        print("getting unassigned")
+        click.echo("Hang on, getting unassigned issues for you...")
         return get_unassigned_issues(asc, headers)
 
     params = {"direction": "asc"} if asc else {"direction": "desc"}
@@ -250,14 +260,15 @@ def get_command(
 ) -> None:
     """ Implementation of the *get* command.
     """
+
     logger.info(
         f"""Getting {spec} for {ctx.obj.get_value('username')}
         from github.com with parameters: color={str(color)}, ascending={str(asc)} \n"""
     )
     headers = {"Authorization": f"Bearer {ctx.obj.get_value('token')}"}
+
     if spec == "issues":
         res = get_issues(unassigned, asc, headers=headers)
-
         print_issues(res, color, repo)
     elif spec == "prs":
         res = get_prs(ctx, headers=headers)
