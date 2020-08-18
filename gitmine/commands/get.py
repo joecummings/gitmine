@@ -196,7 +196,7 @@ def get_issues(
         click.echo("Hang on, getting unassigned issues for you...")
         return get_unassigned_issues(asc, headers)
 
-    params = {"direction": "asc"} if asc else {"direction": "desc"}
+    params = {"direction": "asc" if asc else "desc"}
     logger.debug(f"Fetching issues from github.com \n")
     url_format = "https://api.github.com/issues"
     response = requests.get(url_format, headers=headers, params=params)
