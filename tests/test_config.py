@@ -37,8 +37,7 @@ def file_config():
 
 
 def base_runner(options):
-    command = ["config"]
-    command.extend(options)
+    command = ["config", *options]
     return runner.invoke(gitmine, command)
 
 

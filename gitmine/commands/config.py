@@ -133,7 +133,7 @@ def handle_encrypt_option(e: bool, d: bool):
             key = read_handle.read()
 
     # Encrypt the file
-    if e == True:
+    if e:
         if not key_exists:
             key = Fernet.generate_key()
             with open(KEY_PATH, "wb") as write_handle:
@@ -142,7 +142,7 @@ def handle_encrypt_option(e: bool, d: bool):
         encrypt_file(key, GITHUB_CREDENTIALS_PATH)
 
     # Decrypt the file
-    if d == True:
+    if d:
         if not key_exists:
             raise click.BadOptionUsage(
                 option_name="--decrypt",
