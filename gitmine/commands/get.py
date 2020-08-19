@@ -136,8 +136,7 @@ class Repository:
         elif issues_or_prs == "prs":
             for pr in self.prs:
                 res.append(str(pr))
-        res.append("\n")
-        return "\n".join(res)
+        return "\n".join(res) + "\n"
 
 
 class RepoDict(defaultdict):
@@ -233,7 +232,6 @@ def get_unassigned_issues(
             )
         }
 
-    # there's gotta be a better way to get the num_of_issues, right?
     return repositories, sum([len(r.issues) for r in repositories.values()])
 
 
