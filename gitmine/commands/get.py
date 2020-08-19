@@ -274,6 +274,7 @@ def echo_info(
     repo-title
     #issue-number issue-title
     ...
+    #pr-number pr-title
     """
 
     if not repos:
