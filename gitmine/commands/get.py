@@ -17,6 +17,11 @@ from gitmine.utils import catch_bad_responses
 logger = logging.getLogger(LOGGER)
 thread_local = threading.local()
 
+OK_DELTA = 2
+WARNING_DELTA = 5
+
+MAX_ISSUES_TO_STDOUT = 20
+
 
 def get_session():
     if not hasattr(thread_local, "session"):
@@ -51,9 +56,9 @@ class GithubElement:
         if not self.color_coded:
             return "white"
 
-        if self.elapsed_time < timedelta(days=2):
+        if self.elapsed_time < timedelta(days=OK_DELTA):
             return "green"
-        if self.elapsed_time < timedelta(days=5):
+        if self.elapsed_time < timedelta(days=WARNING_DELTA):
             return "yellow"
         return "red"
 
@@ -280,7 +285,7 @@ def echo_info(
     if not repos:
         click.echo(f"No {type_of_data} found! Keep up the good work.")
 
-    if num_of_issues > 20:
+    if num_of_issues > MAX_ISSUES_TO_STDOUT:
         all_repos = [repo.as_str(type_of_data) for repo in repos.values()]
         click.echo_via_pager("\n".join(all_repos))
     else:
