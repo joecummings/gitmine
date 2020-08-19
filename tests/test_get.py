@@ -28,8 +28,7 @@ def get_configuration():
 
 
 def base_runner(options):
-    command = ["get"]
-    command.extend(options)
+    command = ["get", *options]
     return runner.invoke(gitmine, command)
 
 
