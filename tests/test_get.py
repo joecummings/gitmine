@@ -6,7 +6,7 @@ import pytest
 from click.testing import CliRunner
 from test_constants import TEST_ISSUES_PATH, TEST_PRS_PATH
 
-from gitmine.commands.get import print_issues, print_prs
+from gitmine.commands.get import echo_info
 from gitmine.gitmine import gitmine  # gitmine?
 
 runner = CliRunner()
