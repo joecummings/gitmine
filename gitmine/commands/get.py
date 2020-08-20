@@ -20,7 +20,7 @@ thread_local = threading.local()
 OK_DELTA = 2
 WARNING_DELTA = 5
 
-MAX_ISSUES_TO_STDOUT = 20
+MAX_ELEMS_TO_STDOUT = 20
 
 
 def get_session():
@@ -128,12 +128,12 @@ class Repository:
     def has_prs(self) -> bool:
         return True if self.prs else False
 
-    def as_str(self, issues_or_prs: str) -> str:
+    def as_str(self, elem: str) -> str:
         res = [self.name]
-        if issues_or_prs == "issues":
+        if elem == "issues":
             for issue in self.issues:
                 res.append(str(issue))
-        elif issues_or_prs == "prs":
+        elif elem == "prs":
             for pr in self.prs:
                 res.append(str(pr))
         return "\n".join(res) + "\n"
@@ -147,10 +147,14 @@ class RepoDict(defaultdict):
         self[key] = Repository(name=key)
         return self[key]
 
+    def total_num_of_issues(self) -> int:
+        return sum(len(r.issues) for r in self.values())
 
-def get_prs(
-    ctx: click.Context, color: bool, headers: Mapping[str, str]
-) -> Tuple[RepoDict, int]:
+    def total_num_of_prs(self) -> int:
+        return sum(len(r.prs) for r in self.values())
+
+
+def get_prs(ctx: click.Context, color: bool, headers: Mapping[str, str]) -> RepoDict:
     """ Get all Github PRs assigned to user.
     """
     username = ctx.obj.get_value("username")
@@ -161,10 +165,8 @@ def get_prs(
     catch_bad_responses(response, get="prs")
     prs = response.json()["items"]
 
-    num_of_prs = 0
     repositories = RepoDict()
     for pr in prs:
-        num_of_prs += 1
         url = pr["html_url"]
         repo_name = re.findall(r"github.com/(.+?)/pull", url)[0]
         repositories[repo_name].add_pr(
@@ -178,12 +180,12 @@ def get_prs(
             )
         )
 
-    return repositories, num_of_prs
+    return repositories
 
 
 def get_unassigned_issues(
     asc: bool, color: bool, headers: Mapping[str, str]
-) -> Tuple[Mapping[str, Repository], int]:
+) -> RepoDict:
     """ Get all Github Issues that are unnassigned from the repos in which user is a collaborator.
     """
 
@@ -224,20 +226,24 @@ def get_unassigned_issues(
             return repo_class
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        repositories = {
-            repo.name: repo
-            for repo in filter(
-                lambda x: x.has_issues(),
-                executor.map(get_issues_by_repo, collaborator_repos),
-            )
-        }
+        repositories = RepoDict(
+            # https://www.gitmemory.com/issue/python/mypy/7217/512213750
+            Repository,  # type: ignore
+            {
+                repo.name: repo
+                for repo in filter(
+                    lambda x: x.has_issues(),
+                    executor.map(get_issues_by_repo, collaborator_repos),
+                )
+            },
+        )
 
-    return repositories, sum([len(r.issues) for r in repositories.values()])
+    return repositories
 
 
 def get_issues(
     unassigned: bool, asc: bool, color: bool, headers: Mapping[str, str]
-) -> Tuple[Mapping[str, Repository], int]:
+) -> RepoDict:
     """ Get all Github Issues assigned to user.
     """
 
@@ -252,9 +258,7 @@ def get_issues(
     catch_bad_responses(response, get="issues")
 
     repositories = RepoDict()
-    num_of_issues = 0
     for issue in response.json():
-        num_of_issues += 1
         repo_name = issue["repository"]["full_name"]
         repositories[repo_name].add_issue(
             Issue(
@@ -266,12 +270,10 @@ def get_issues(
                 color_coded=True if color else False,
             )
         )
-    return repositories, num_of_issues
+    return repositories
 
 
-def echo_info(
-    repos: Mapping[str, Repository], type_of_data: str, num_of_issues: int
-) -> None:
+def echo_info(repos: RepoDict, elem: str) -> None:
     """ Print issues/prs in the following format:
 
     repo-title
@@ -281,14 +283,18 @@ def echo_info(
     """
 
     if not repos:
-        click.echo(f"No {type_of_data} found! Keep up the good work.")
+        click.echo(f"No {elem} found! Keep up the good work.")
 
-    if num_of_issues > MAX_ISSUES_TO_STDOUT:
-        all_repos = [repo.as_str(type_of_data) for repo in repos.values()]
+    num_of_elems = (
+        repos.total_num_of_issues() if elem == "issues" else repos.total_num_of_prs()
+    )
+
+    if num_of_elems > MAX_ELEMS_TO_STDOUT:
+        all_repos = [repo.as_str(elem) for repo in repos.values()]
         click.echo_via_pager("\n".join(all_repos))
     else:
         for repo in repos.values():
-            click.echo(repo.as_str(type_of_data))
+            click.echo(repo.as_str(elem))
 
 
 def get_command(
@@ -304,16 +310,16 @@ def get_command(
     headers = {"Authorization": f"Bearer {ctx.obj.get_value('token')}"}
 
     if spec == "all":
-        res, num_of_issues = get_issues(unassigned, asc, color, headers=headers)
-        echo_info(res, "issues", num_of_issues)
+        res = get_issues(unassigned, asc, color, headers=headers)
+        echo_info(res, "issues")
         click.echo(f"* " * 20)
-        res, num_of_prs = get_prs(ctx, color, headers=headers)
-        echo_info(res, "prs", num_of_prs)
+        res = get_prs(ctx, color, headers=headers)
+        echo_info(res, "prs")
     elif spec == "issues":
-        res, num_of_issues = get_issues(unassigned, asc, color, headers=headers)
-        echo_info(res, "issues", num_of_issues)
+        res = get_issues(unassigned, asc, color, headers=headers)
+        echo_info(res, "issues")
     elif spec == "prs":
-        res, num_of_prs = get_prs(ctx, color, headers=headers)
-        echo_info(res, "prs", num_of_prs)
+        res = get_prs(ctx, color, headers=headers)
+        echo_info(res, "prs")
     else:
         raise click.BadArgumentUsage(message=f"Unkown spec: {spec}")
