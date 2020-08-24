@@ -53,7 +53,6 @@ def test_config_username_returns_specified(file_config):
 
 def test_config_username_returns_correct(file_config):
     result = base_runner(["username", "abc"])
-    print(result)
     assert result.output == "abc\n"
 
 

@@ -37,6 +37,15 @@ class GithubConfig:
             return self.username
         raise click.BadArgumentUsage(message=f"Unknown property specified: {prop}")
 
+    def get_protected_value(self, prop: str) -> str:
+        if prop == "token":
+            if self.key:
+                return base64.b64encode(os.urandom(len(self.token))).decode("utf-8")
+            return self.token
+        elif prop == "username":
+            return self.username
+        raise click.BadArgumentUsage(message=f"Unknown property specified: {prop}")
+
     def set_prop(self, prop: str, value: Union[str, bytes]) -> None:
         if prop == "key":
             self.key = value
@@ -56,7 +65,7 @@ def config_command(
     handle_encrypt_option(encrypt, decrypt)
 
     if not value and prop:
-        click.echo(ctx.obj.get_value(prop))
+        click.echo(ctx.obj.get_protected_value(prop))
 
     elif value:
         ctx.obj.set_prop(prop, value)
@@ -84,7 +93,7 @@ def get_or_create_github_config() -> GithubConfig:
     github_config = GithubConfig()
 
     logger.info("Found github credentials - loading into Config")
-    with open_credentials("r") as cred_handle:
+    with open_credentials("r", config=github_config) as cred_handle:
         for line in cred_handle:
             prop, value = line.split()
             github_config.set_prop(prop, value)
@@ -93,7 +102,7 @@ def get_or_create_github_config() -> GithubConfig:
 
 
 class open_credentials(object):
-    def __init__(self, method: str):
+    def __init__(self, method: str, config=None):
         self.file_name = GITHUB_CREDENTIALS_PATH
         if not self.file_name.exists():
             self.file_name.touch()
@@ -102,6 +111,8 @@ class open_credentials(object):
         if self.key_exists:
             with open(KEY_PATH, "rb") as key_handle:
                 self.key = key_handle.read()
+                if config:
+                    config.set_prop("key", self.key)
             decrypt_file(self.key, self.file_name)
 
     def __enter__(self):
