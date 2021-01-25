@@ -3,7 +3,6 @@ from click.testing import CliRunner
 from gitmine.commands.config import get_or_create_github_config
 from gitmine.gitmine import config, get, gitmine, go
 
-
 runner = CliRunner()
 
 # GITMINE - General

@@ -38,4 +38,4 @@ black-check:
 	isort --check $(PYTHON_FILES)
 	black --config pyproject.toml --check $(PYTHON_FILES)
 
-check: reqs-check black-check flake8 mypy lint docstyle
+check: reqs-check black-check flake8 mypy lint
