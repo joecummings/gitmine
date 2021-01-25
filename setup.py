@@ -1,5 +1,3 @@
-import re
-
 from setuptools import find_packages, setup
 
 from gitmine.version import __version__
@@ -18,7 +16,7 @@ install_requires = [
 setup(
     name="gitmine",
     packages=find_packages(),
-    entry_points={"console_scripts": ["gitmine = gitmine.gitmine:main"]},
+    entry_points={"console_scripts": ["gitmine = gitmine.gitmine:gitmine"]},
     install_requires=install_requires,
     include_package_data=True,
     python_requires=">=3.6",

@@ -4,7 +4,7 @@
 
 Stop getting buried under countless Github Issues and PRs. Organize, reference, and close with ease.
 
-Based on the amazing work done by Github itself on [hub](https://github.com/github/hub).
+Based on the amazing work done by Github itself on [hub](https://github.com/github/hub) and [Github CLI](https://cli.github.com/) (release while we were working on this project. Well done, us).
 
 #### Who is this for?
 

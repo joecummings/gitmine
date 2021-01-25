@@ -6,11 +6,12 @@ cache:
     pip: true
 
 install:
+    - pip install -r requirements-dev.txt
     - pip install -r requirements.txt
     - pip install -e .
     
 script:
     - echo "python version $(python --version) running"
     - echo "pip version $(pip --version) running"
+    - make check
     - pytest tests/
-    - mypy gitmine/ tests/ --no-strict-optional --ignore-missing-imports

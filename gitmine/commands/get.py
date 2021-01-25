@@ -1,20 +1,17 @@
+from collections import defaultdict
 import concurrent.futures
+from datetime import datetime, timedelta
 import logging
 import re
 import threading
-import time
-from collections import defaultdict
-from datetime import datetime, timedelta
-from itertools import chain
-from typing import Any, List, Mapping, Tuple
+from typing import Any, List, Mapping
 
 import click
 import requests
 
-from gitmine.constants import LOGGER
 from gitmine.utils import catch_bad_responses
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger()
 thread_local = threading.local()
 
 OK_DELTA = 2
@@ -23,7 +20,7 @@ WARNING_DELTA = 5
 MAX_ELEMS_TO_STDOUT = 20
 
 
-def get_session():
+def get_session() -> Any:
     if not hasattr(thread_local, "session"):
         thread_local.session = requests.Session()
     return thread_local.session
@@ -35,14 +32,14 @@ class GithubElement:
 
     def __init__(
         self,
-        type: str,
+        name: str,
         title: str,
         number: int,
         url: str,
         elapsed_time: timedelta,
         color_coded: bool,
     ) -> None:
-        self.type = type
+        self.name = name
         self.title = title
         self.number = number
         self.url = url
@@ -68,15 +65,10 @@ class Issue(GithubElement):
     """
 
     def __init__(
-        self,
-        title: str,
-        number: int,
-        url: str,
-        elapsed_time: timedelta,
-        color_coded: bool,
+        self, title: str, number: int, url: str, elapsed_time: timedelta, color_coded: bool,
     ):
         super().__init__(
-            type="Issue",
+            name="Issue",
             title=title,
             number=number,
             url=url,
@@ -90,15 +82,10 @@ class PullRequest(GithubElement):
     """
 
     def __init__(
-        self,
-        title: str,
-        number: int,
-        url: str,
-        elapsed_time: timedelta,
-        color_coded: bool,
+        self, title: str, number: int, url: str, elapsed_time: timedelta, color_coded: bool,
     ):
         super().__init__(
-            type="PullRequest",
+            name="PullRequest",
             title=title,
             number=number,
             url=url,
@@ -123,10 +110,10 @@ class Repository:
         self.prs.append(pr)
 
     def has_issues(self) -> bool:
-        return True if self.issues else False
+        return bool(self.issues)
 
     def has_prs(self) -> bool:
-        return True if self.prs else False
+        return bool(self.prs)
 
     def as_str(self, elem: str) -> str:
         res = [self.name]
@@ -139,13 +126,13 @@ class Repository:
         return "\n".join(res) + "\n"
 
 
-class RepoDict(defaultdict):
+class RepoDict(defaultdict):  # type: ignore
     """ Class to extend *defaultdict* to be able to access a key as input
     """
 
-    def __missing__(self, key):
+    def __missing__(self, key: str) -> Repository:
         self[key] = Repository(name=key)
-        return self[key]
+        return self[key]  # type: ignore
 
     def total_num_of_issues(self) -> int:
         return sum(len(r.issues) for r in self.values())
@@ -176,20 +163,18 @@ def get_prs(ctx: click.Context, color: bool, headers: Mapping[str, str]) -> Repo
                 url=url,
                 elapsed_time=datetime.now()
                 - datetime.strptime(pr["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
-                color_coded=True if color else False,
+                color_coded=color,
             )
         )
 
     return repositories
 
 
-def get_unassigned_issues(
-    asc: bool, color: bool, headers: Mapping[str, str]
-) -> RepoDict:
+def get_unassigned_issues(asc: bool, color: bool, headers: Mapping[str, str]) -> RepoDict:
     """ Get all Github Issues that are unnassigned from the repos in which user is a collaborator.
     """
 
-    def get_collaborator_repos() -> List[Mapping[str, Any]]:
+    def get_collaborator_repos() -> Any:
         """ Get all Github repos where user is classified as a collaborator.
         """
 
@@ -220,7 +205,7 @@ def get_unassigned_issues(
                         url=issue["html_url"],
                         elapsed_time=datetime.now()
                         - datetime.strptime(issue["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
-                        color_coded=True if color else False,
+                        color_coded=color,
                     )
                 )
             return repo_class
@@ -232,8 +217,7 @@ def get_unassigned_issues(
             {
                 repo.name: repo
                 for repo in filter(
-                    lambda x: x.has_issues(),
-                    executor.map(get_issues_by_repo, collaborator_repos),
+                    lambda x: x.has_issues(), executor.map(get_issues_by_repo, collaborator_repos),
                 )
             },
         )
@@ -242,7 +226,7 @@ def get_unassigned_issues(
 
 
 def get_issues(
-    unassigned: bool, asc: bool, color: bool, headers: Mapping[str, str]
+    unassigned: bool, asc: bool, color: bool, repo_name: str, headers: Mapping[str, str]
 ) -> RepoDict:
     """ Get all Github Issues assigned to user.
     """
@@ -252,7 +236,7 @@ def get_issues(
         return get_unassigned_issues(asc, color, headers)
 
     params = {"direction": "asc" if asc else "desc"}
-    logger.debug(f"Fetching issues from github.com \n")
+    logger.debug("Fetching issues from github.com \n")
     url_format = "https://api.github.com/issues"
     response = requests.get(url_format, headers=headers, params=params)
     catch_bad_responses(response, get="issues")
@@ -267,9 +251,10 @@ def get_issues(
                 url=issue["html_url"],
                 elapsed_time=datetime.now()
                 - datetime.strptime(issue["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
-                color_coded=True if color else False,
+                color_coded=color,
             )
         )
+
     return repositories
 
 
@@ -285,9 +270,7 @@ def echo_info(repos: RepoDict, elem: str) -> None:
     if not repos:
         click.echo(f"No {elem} found! Keep up the good work.")
 
-    num_of_elems = (
-        repos.total_num_of_issues() if elem == "issues" else repos.total_num_of_prs()
-    )
+    num_of_elems = repos.total_num_of_issues() if elem == "issues" else repos.total_num_of_prs()
 
     if num_of_elems > MAX_ELEMS_TO_STDOUT:
         all_repos = [repo.as_str(elem) for repo in repos.values()]
@@ -298,7 +281,12 @@ def echo_info(repos: RepoDict, elem: str) -> None:
 
 
 def get_command(
-    ctx: click.Context, spec: str, color: bool, asc: bool, repo: str, unassigned: bool
+    ctx: click.Context,
+    spec: str,
+    color: bool,
+    asc: bool,
+    repo_name: str = "",
+    unassigned: bool = False,
 ) -> None:
     """ Implementation of the *get* command.
     """
@@ -310,13 +298,13 @@ def get_command(
     headers = {"Authorization": f"Bearer {ctx.obj.get_value('token')}"}
 
     if spec == "all":
-        res = get_issues(unassigned, asc, color, headers=headers)
+        res = get_issues(unassigned, asc, color, repo_name, headers=headers)
         echo_info(res, "issues")
-        click.echo(f"* " * 20)
+        click.echo("* " * 20)
         res = get_prs(ctx, color, headers=headers)
         echo_info(res, "prs")
     elif spec == "issues":
-        res = get_issues(unassigned, asc, color, headers=headers)
+        res = get_issues(unassigned, asc, color, repo_name, headers=headers)
         echo_info(res, "issues")
     elif spec == "prs":
         res = get_prs(ctx, color, headers=headers)
