@@ -1,4 +1,5 @@
 from pathlib import Path
 
-GITHUB_CREDENTIALS_PATH = Path.home() / Path(".gitmine_credentials")
-KEY_PATH = Path.home() / Path(".gitmine.key")
+GH_CREDENTIALS_PATH = Path.home() / ".config" / "gh" / "hosts.yml"
+GHP_CREDENTIALS_DIR = Path.home() / ".config" / "ghp"
+GHP_CREDENTIALS_PATH = GHP_CREDENTIALS_DIR / "hosts.yml"

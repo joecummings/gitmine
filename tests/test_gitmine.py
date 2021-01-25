@@ -5,9 +5,6 @@ from gitmine.gitmine import config, get, gitmine, go
 
 runner = CliRunner()
 
-# GITMINE - General
-
-
 def test_gitmine_without_command():
     result = runner.invoke(gitmine, [])
     assert result.exit_code == 0
