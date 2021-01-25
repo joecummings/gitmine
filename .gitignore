@@ -7,3 +7,4 @@ __pycache__/
 gitmine.key
 build/
 dist/
+.coverage

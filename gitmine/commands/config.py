@@ -1,34 +1,27 @@
-import base64
 import binascii
 import logging
-import os
-from contextlib import contextmanager
-from copy import copy
 from pathlib import Path
-from typing import Union
+from types import TracebackType
+from typing import IO, Optional, Type
 
 import click
-from cryptography.exceptions import InvalidSignature
 from cryptography.fernet import Fernet, InvalidToken
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATH, LOGGER
+from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATH
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger()
 
 
 class GithubConfig:
     """ Github Config object, holds information about username and bearer token
     """
 
-    def __init__(self):
-        self.token = None
-        self.username = None
-        self.key = None
+    def __init__(self) -> None:
+        self.token = ""
+        self.username = ""
+        self.key = ""
 
-    def get_value(self, prop: str) -> str:
+    def get_value(self, prop: str) -> Optional[str]:
         if prop == "key":
             return self.key
         elif prop == "token":
@@ -37,7 +30,7 @@ class GithubConfig:
             return self.username
         raise click.BadArgumentUsage(message=f"Unknown property specified: {prop}")
 
-    def set_prop(self, prop: str, value: Union[str, bytes]) -> None:
+    def set_prop(self, prop: str, value: str) -> None:
         if prop == "key":
             self.key = value
         elif prop == "token":
@@ -48,9 +41,7 @@ class GithubConfig:
             raise click.BadArgumentUsage(message=f"Unknown property specified: {prop}")
 
 
-def config_command(
-    ctx: click.Context, prop: str, value: str, encrypt: bool, decrypt: bool
-) -> None:
+def config_command(ctx: click.Context, prop: str, value: str, encrypt: bool, decrypt: bool) -> None:
     """ Implementation of the *config* command
     """
     handle_encrypt_option(encrypt, decrypt)
@@ -61,12 +52,12 @@ def config_command(
     elif value:
         ctx.obj.set_prop(prop, value)
 
-        with open_credentials("r") as read_handle:
+        with OpenCredentials("r") as read_handle:
             props_val = {}
             for line in read_handle:
                 curr_prop, curr_value = line.split()
                 props_val[curr_prop] = curr_value
-            with open_credentials("w+") as write_handle:
+            with OpenCredentials("w+") as write_handle:
                 props_val[prop] = value
                 for true_prop, true_value in props_val.items():
                     write_handle.write(f"{true_prop} {true_value}\n")
@@ -84,7 +75,7 @@ def get_or_create_github_config() -> GithubConfig:
     github_config = GithubConfig()
 
     logger.info("Found github credentials - loading into Config")
-    with open_credentials("r") as cred_handle:
+    with OpenCredentials("r") as cred_handle:
         for line in cred_handle:
             prop, value = line.split()
             github_config.set_prop(prop, value)
@@ -92,7 +83,7 @@ def get_or_create_github_config() -> GithubConfig:
     return github_config
 
 
-class open_credentials(object):
+class OpenCredentials:
     def __init__(self, method: str):
         self.file_name = GITHUB_CREDENTIALS_PATH
         if not self.file_name.exists():
@@ -104,23 +95,31 @@ class open_credentials(object):
                 self.key = key_handle.read()
             decrypt_file(self.key, self.file_name)
 
-    def __enter__(self):
-        self.file_obj = open(self.file_name, self.method)
+    def __enter__(self) -> IO[str]:
+        self.file_obj = open(  # pylint: disable=attribute-defined-outside-init
+            self.file_name, self.method
+        )
         if len(self.file_obj.read().split()) == 1 and not self.key_exists:
             raise click.FileError(
-                f"MissingKey: Credentials file is currently encrypted and the key is missing, please try resetting your credentials file"
+                "MissingKey: Credentials file is currently encrypted and the key is missing, please try resetting your credentials file."
             )
         # reset file pointer
         self.file_obj.seek(0)
         return self.file_obj
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(
+        self,
+        exception_type: Optional[Type[BaseException]],
+        exception_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> Optional[bool]:
         if self.key_exists:
             encrypt_file(self.key, self.file_name)
         self.file_obj.close()
+        return True
 
 
-def handle_encrypt_option(e: bool, d: bool):
+def handle_encrypt_option(encrypt: bool, decrypt: bool) -> None:
     """Encryption can be True or False as specified by the user parameter:
         True: we generate a key and encrypt the credentials file using Fernet Encryption
         False: if the file is currently encrypted - we decrypt it and delete the key
@@ -133,7 +132,7 @@ def handle_encrypt_option(e: bool, d: bool):
             key = read_handle.read()
 
     # Encrypt the file
-    if e:
+    if encrypt:
         if not key_exists:
             key = Fernet.generate_key()
             with open(KEY_PATH, "wb") as write_handle:
@@ -142,11 +141,10 @@ def handle_encrypt_option(e: bool, d: bool):
         encrypt_file(key, GITHUB_CREDENTIALS_PATH)
 
     # Decrypt the file
-    if d:
+    if decrypt:
         if not key_exists:
             raise click.BadOptionUsage(
-                option_name="--decrypt",
-                message="cannot be used when file is already decrypted",
+                option_name="--decrypt", message="cannot be used when file is already decrypted",
             )
         decrypt_file(key, GITHUB_CREDENTIALS_PATH)
         KEY_PATH.unlink()
@@ -163,7 +161,7 @@ def encrypt_file(key: bytes, file: Path) -> None:
         f = Fernet(key)
     except (binascii.Error, ValueError):
         raise click.ClickException(
-            f"Error: Cannot Encrypt File - given key is in incorrect format, please try resetting your credentials"
+            "Error: Cannot Encrypt File - given key is in incorrect format, please try resetting your credentials."
         )
 
     with open(file, "r") as read_handle:
@@ -191,7 +189,7 @@ def decrypt_file(key: bytes, file: Path) -> None:
         f = Fernet(key)
     except (binascii.Error, ValueError):
         raise click.ClickException(
-            f"Error: Cannot Decrypt File - given key is in incorrect format, please try resetting your credentials"
+            "Error: Cannot Decrypt File - given key is in incorrect format, please try resetting your credentials."
         )
 
     with open(file, "rb") as read_handle:

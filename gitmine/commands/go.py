@@ -3,9 +3,7 @@ from typing import Optional
 
 import click
 
-from gitmine.constants import LOGGER
-
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger()
 
 
 def go_command(repo: str, number: Optional[int]) -> None:

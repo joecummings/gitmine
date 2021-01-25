@@ -1,5 +1,7 @@
 black
-mypy
-setuptools
 flake8
 isort
+mypy
+pydantic
+pydocstyle
+setuptools
