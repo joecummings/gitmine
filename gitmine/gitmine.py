@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Callable, List, Optional, TypeVar
 
 import click
 
@@ -19,27 +19,31 @@ def gitmine(ctx: click.Context) -> None:
     ctx.obj = get_or_create_github_config()
 
 
-class StdCommand(click.core.Command):
-    """
-    A base class with common parameters
-    Idea pulled from https://stackoverflow.com/questions/40182157/shared-options-and-flags-between-commands
-    """
+_verbose_cmd = [
+    click.option(
+        "-v",
+        "--verbose",
+        count=True,
+        help="Give more output. Option is additive, and can be used up to two times.",
+    )
+]
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self.params.insert(
-            0,
-            click.core.Option(
-                ["-v", "--verbose"],
-                count=True,
-                help="Give more output. Option is additive, and can be used up to two times.",
-            ),
-        )
+T = TypeVar("T")
 
 
-@gitmine.command(cls=StdCommand)
+def add_options(options: List[T],) -> Callable[[Callable[..., None]], Callable[..., None]]:
+    def _add_options(func: Callable[..., None]) -> Callable[..., None]:
+        for option in reversed(options):
+            func = option(func)  # type: ignore
+        return func
+
+    return _add_options
+
+
+@gitmine.command()
 @click.argument("prop", nargs=1, required=True, type=click.Choice(["username", "token"]))
 @click.argument("value", nargs=1, required=False, type=click.STRING)
+@add_options(_verbose_cmd)
 @click.pass_context
 def config(ctx: click.Context, prop: str, value: str, verbose: int,) -> None:
     """ Set or Access Github Config information. Currently, config requires a Github username and Bearer token.
@@ -51,7 +55,7 @@ def config(ctx: click.Context, prop: str, value: str, verbose: int,) -> None:
     config_command(ctx, prop, value)
 
 
-@gitmine.command(cls=StdCommand)
+@gitmine.command()
 @click.option(
     "--color/--no-color", default=True, help="Color code Issues/PRs according to elapsed time.",
 )
@@ -71,6 +75,7 @@ def config(ctx: click.Context, prop: str, value: str, verbose: int,) -> None:
     help="Get all unassigned Issues / PRs from your repositories.",
 )
 @click.argument("spec", nargs=1, required=True, type=click.Choice(["issues", "prs", "all"]))
+@add_options(_verbose_cmd)
 @click.pass_context
 def get(
     ctx: click.Context,
@@ -89,9 +94,10 @@ def get(
     get_command(ctx, spec, color, asc, repo, unassigned)
 
 
-@gitmine.command(cls=StdCommand)
+@gitmine.command()
 @click.argument("repo", nargs=1, required=True, type=click.STRING)
 @click.argument("number", nargs=1, required=False, type=click.INT)
+@add_options(_verbose_cmd)
 @click.pass_context
 def go(
     ctx: click.Context,  # pylint: disable=unused-argument
