@@ -38,28 +38,17 @@ class StdCommand(click.core.Command):
 
 
 @gitmine.command(cls=StdCommand)
-@click.option(
-    "--encrypt", is_flag=True, default=False, help="Encrypt your credentials.",
-)
-@click.option(
-    "--decrypt",
-    is_flag=True,
-    default=False,
-    help="Decrypt your credentials if previously encrypted",
-)
 @click.argument("prop", nargs=1, required=True, type=click.Choice(["username", "token"]))
 @click.argument("value", nargs=1, required=False, type=click.STRING)
 @click.pass_context
-def config(
-    ctx: click.Context, prop: str, value: str, encrypt: bool, decrypt: bool, verbose: int,
-) -> None:
+def config(ctx: click.Context, prop: str, value: str, verbose: int,) -> None:
     """ Set or Access Github Config information. Currently, config requires a Github username and Bearer token.
 
     [username|token] is the property to be set if *value* is also provided. If not, will return the current value of *prop* if it exists.\n
     VALUE is the value of property to be set.
     """
     set_verbosity(verbose)
-    config_command(ctx, prop, value, encrypt, decrypt)
+    config_command(ctx, prop, value)
 
 
 @gitmine.command(cls=StdCommand)

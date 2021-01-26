@@ -1,13 +1,11 @@
-import binascii
 import logging
 from pathlib import Path
-from types import TracebackType
-from typing import IO, Optional, Type
+from typing import Dict, Optional
 
 import click
-from cryptography.fernet import Fernet, InvalidToken
+import yaml
 
-from gitmine.constants import GITHUB_CREDENTIALS_PATH, KEY_PATH
+from gitmine.constants import GH_CREDENTIALS_PATH, GHP_CREDENTIALS_DIR, GHP_CREDENTIALS_PATH
 
 logger = logging.getLogger()
 
@@ -19,187 +17,87 @@ class GithubConfig:
     def __init__(self) -> None:
         self.token = ""
         self.username = ""
-        self.key = ""
 
     def get_value(self, prop: str) -> Optional[str]:
-        if prop == "key":
-            return self.key
-        elif prop == "token":
+        if prop == "token":
             return self.token
         elif prop == "username":
             return self.username
         raise click.BadArgumentUsage(message=f"Unknown property specified: {prop}")
 
     def set_prop(self, prop: str, value: str) -> None:
-        if prop == "key":
-            self.key = value
-        elif prop == "token":
+        if prop == "token":
             self.token = value
         elif prop == "username":
             self.username = value
         else:
             raise click.BadArgumentUsage(message=f"Unknown property specified: {prop}")
 
+    def config_as_dict(self) -> Dict[str, Dict[str, str]]:
+        return {"github.com": {"username": self.username, "token": self.token}}
 
-def config_command(ctx: click.Context, prop: str, value: str, encrypt: bool, decrypt: bool) -> None:
+    @staticmethod
+    def load_config_from_yaml(path_to_yaml_file: Path) -> "GithubConfig":
+        with open(path_to_yaml_file, "r") as handle:
+            gh_yaml = yaml.load(handle, Loader=yaml.FullLoader)
+            github_config = GithubConfig()
+
+            if gh_yaml:
+                gh_yaml_github = gh_yaml["github.com"]
+                try:
+                    username = gh_yaml_github["username"]
+                    token = gh_yaml_github["token"]
+                except KeyError:
+                    # Copying from GH credentials
+                    username = gh_yaml_github["user"]
+                    token = gh_yaml_github["oauth_token"]
+
+                github_config.set_prop("username", username)
+                github_config.set_prop("token", token)
+
+        return github_config
+
+
+def config_command(ctx: click.Context, prop: str, value: str) -> None:
     """ Implementation of the *config* command
     """
-    handle_encrypt_option(encrypt, decrypt)
-
     if not value and prop:
         click.echo(ctx.obj.get_value(prop))
 
     elif value:
         ctx.obj.set_prop(prop, value)
 
-        with OpenCredentials("r") as read_handle:
-            props_val = {}
-            for line in read_handle:
-                curr_prop, curr_value = line.split()
-                props_val[curr_prop] = curr_value
-            with OpenCredentials("w+") as write_handle:
-                props_val[prop] = value
-                for true_prop, true_value in props_val.items():
-                    write_handle.write(f"{true_prop} {true_value}\n")
+        if not GHP_CREDENTIALS_PATH.exists():
+            GHP_CREDENTIALS_PATH.touch()
 
-        logger.info(f"Config {prop} {value} written at {GITHUB_CREDENTIALS_PATH}")
+        ghp_config = GithubConfig.load_config_from_yaml(GHP_CREDENTIALS_PATH)
+        ghp_config.set_prop(prop, value)
+        set_config(ghp_config.config_as_dict())
+
+        logger.info(f"Config {prop} {value} written at {GHP_CREDENTIALS_PATH}")
         click.echo(value)
+
+
+def set_config(config_dict: Dict[str, Dict[str, str]]) -> None:
+    """ Set config file based on dictionary of config values.
+    """
+    with open(GHP_CREDENTIALS_PATH, "w+") as handle:
+        yaml.dump(config_dict, handle)
 
 
 def get_or_create_github_config() -> GithubConfig:
     """ Get Github Config info if it's already been written to disk,
         otherwise create an empty config to be filled in later.
-        If a key has been stored locally then the file is encrypted
         Create a credentials folder if it does not exist.
     """
-    github_config = GithubConfig()
+    if not GHP_CREDENTIALS_DIR.exists():
+        GHP_CREDENTIALS_DIR.mkdir(parents=True)
 
-    logger.info("Found github credentials - loading into Config")
-    with OpenCredentials("r") as cred_handle:
-        for line in cred_handle:
-            prop, value = line.split()
-            github_config.set_prop(prop, value)
+    if GHP_CREDENTIALS_PATH.exists():
+        return GithubConfig.load_config_from_yaml(GHP_CREDENTIALS_PATH)
+    elif GH_CREDENTIALS_PATH.exists():
+        gh_config = GithubConfig.load_config_from_yaml(GH_CREDENTIALS_PATH)
+        set_config(gh_config.config_as_dict())  # copy to our own credentials
+        return gh_config
 
-    return github_config
-
-
-class OpenCredentials:
-    def __init__(self, method: str):
-        self.file_name = GITHUB_CREDENTIALS_PATH
-        if not self.file_name.exists():
-            self.file_name.touch()
-        self.method = method
-        self.key_exists = KEY_PATH.exists()
-        if self.key_exists:
-            with open(KEY_PATH, "rb") as key_handle:
-                self.key = key_handle.read()
-            decrypt_file(self.key, self.file_name)
-
-    def __enter__(self) -> IO[str]:
-        self.file_obj = open(  # pylint: disable=attribute-defined-outside-init
-            self.file_name, self.method
-        )
-        if len(self.file_obj.read().split()) == 1 and not self.key_exists:
-            raise click.FileError(
-                "MissingKey: Credentials file is currently encrypted and the key is missing, please try resetting your credentials file."
-            )
-        # reset file pointer
-        self.file_obj.seek(0)
-        return self.file_obj
-
-    def __exit__(
-        self,
-        exception_type: Optional[Type[BaseException]],
-        exception_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
-    ) -> Optional[bool]:
-        if self.key_exists:
-            encrypt_file(self.key, self.file_name)
-        self.file_obj.close()
-        return True
-
-
-def handle_encrypt_option(encrypt: bool, decrypt: bool) -> None:
-    """Encryption can be True or False as specified by the user parameter:
-        True: we generate a key and encrypt the credentials file using Fernet Encryption
-        False: if the file is currently encrypted - we decrypt it and delete the key
-        None: return
-    """
-
-    key_exists = KEY_PATH.exists()
-    if key_exists:
-        with open(KEY_PATH, "rb") as read_handle:
-            key = read_handle.read()
-
-    # Encrypt the file
-    if encrypt:
-        if not key_exists:
-            key = Fernet.generate_key()
-            with open(KEY_PATH, "wb") as write_handle:
-                write_handle.write(key)
-            logger.debug(f"Generated encryption key, stored at {KEY_PATH}")
-        encrypt_file(key, GITHUB_CREDENTIALS_PATH)
-
-    # Decrypt the file
-    if decrypt:
-        if not key_exists:
-            raise click.BadOptionUsage(
-                option_name="--decrypt", message="cannot be used when file is already decrypted",
-            )
-        decrypt_file(key, GITHUB_CREDENTIALS_PATH)
-        KEY_PATH.unlink()
-
-
-def encrypt_file(key: bytes, file: Path) -> None:
-    """Uses Fernet encryption to encrypt the file at the given path using the key
-    """
-    if not file.exists():
-        logger.info(f"Could not find file {file}")
-        return
-
-    try:
-        f = Fernet(key)
-    except (binascii.Error, ValueError):
-        raise click.ClickException(
-            "Error: Cannot Encrypt File - given key is in incorrect format, please try resetting your credentials."
-        )
-
-    with open(file, "r") as read_handle:
-        data = read_handle.read().encode()
-
-    with open(file, "wb") as write_handle:
-        try:
-            write_handle.write(f.encrypt(data))
-        except InvalidToken:
-            raise Exception(
-                "InvalidKey: could not open your credentials file. Please try setting your credentials again."
-            )
-    logger.debug(f"Successfully encrypted file {file}")
-
-
-def decrypt_file(key: bytes, file: Path) -> None:
-    """Uses Fernet encryption to decrypt the given file with the corresponding key
-        Returns plaintext
-    """
-    if not file.exists():
-        logger.info(f"Could not find file {file}")
-        return
-
-    try:
-        f = Fernet(key)
-    except (binascii.Error, ValueError):
-        raise click.ClickException(
-            "Error: Cannot Decrypt File - given key is in incorrect format, please try resetting your credentials."
-        )
-
-    with open(file, "rb") as read_handle:
-        data = read_handle.read()
-
-    with open(file, "w") as write_handle:
-        try:
-            write_handle.write(f.decrypt(data).decode("UTF-8"))
-        except InvalidToken:
-            raise Exception(
-                "InvalidKey: could not open your credentials file. Please try resetting your credentials."
-            )
-    logger.debug(f"Successfully decrypted file {file}")
+    return GithubConfig()
