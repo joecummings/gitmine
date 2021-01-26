@@ -31,7 +31,8 @@ max-line-length = 300
 disable = """
 R,fixme,no-member,unsupported-membership-test,unsubscriptable-object
 unsupported-assignment-operation,not-an-iterable,too-many-lines,wrong-import-order,bad-continuation,
-wrong-import-position,missing-module-docstring,missing-class-docstring,missing-function-docstring,logging-fstring-interpolation
+wrong-import-position,missing-module-docstring,missing-class-docstring,missing-function-docstring,logging-fstring-interpolation,
+invalid-name
 """
 
 [tool.pylint.reports]
