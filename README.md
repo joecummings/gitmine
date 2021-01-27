@@ -4,7 +4,7 @@
 
 Stop getting buried under countless Github Issues and PRs. Organize, reference, and close with ease.
 
-Based on the amazing work done by Github itself on [hub](https://github.com/github/hub) and [Github CLI](https://cli.github.com/) (release while we were working on this project. Well done, us).
+Based on the amazing work done by Github itself on [hub](https://github.com/github/hub) and [Github CLI](https://cli.github.com/) (released while we were working on this project. Must've been on to something). I view this as a natural extension of the `gh` command for easy access to Issues and PRs from anywhere in your command line. 
 
 #### Who is this for?
 
@@ -34,14 +34,13 @@ Commands:
 
 ### Config
 
-To use gitmine you will first need to generate a Personal Access Token. You can follow the instructions [here](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
+If you already have the Github CLI installed and setup, congrats! You can skip this section. `gitmine` automatically piggy-backs on Github CLI's config to access your Github information. 
+To use `gitmine` you will first need to generate a Personal Access Token. You can follow the instructions [here](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token).
 
 ```
 gitmine config username ~git-username~
 gitmine config token ~git-token~
 ```
-
-Gitmine gives you the option to encrypt your credentials with the --encrypt option.
 
 ## Installation
 
@@ -60,4 +59,4 @@ See [Contributing.md](Contributing.md)
 
 ## Common Errors and FAQ's
 
-* Running ```gitmine get prs``` with the wrong username will not error but return nothing
+* Running `gitmine get prs` with the wrong username will not error but return nothing
