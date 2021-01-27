@@ -7,6 +7,7 @@ PYTHON_FILES=gitmine/*.py gitmine/commands/*.py
 
 install:
 	pip install -r requirements.txt
+	pip install -r dev-requirements.txt
 
 lint:
 	pylint $(PYTHON_FILES)
