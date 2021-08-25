@@ -5,7 +5,7 @@ from typing import Dict, Optional
 import click
 import yaml
 
-from gitmine.constants import GH_CREDENTIALS_PATH, GHP_CREDENTIALS_DIR, GHP_CREDENTIALS_PATH
+from gitmine.paths import GH_CREDENTIALS_PATH, GHP_CREDENTIALS_DIR, GHP_CREDENTIALS_PATH
 
 logger = logging.getLogger()
 
