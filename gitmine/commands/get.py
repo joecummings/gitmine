@@ -9,15 +9,12 @@ from typing import Any, List, Mapping, Optional
 import click
 import requests
 
+from gitmine.constants import MAX_ELEMS_TO_STDOUT, OK_DELTA, WARNING_DELTA
+from gitmine.endpoints import ISSUES_ENDPOINT, REPOS_ENDPOINT, SEARCH_ENDPOINT, USER_ENDPOINT
 from gitmine.utils import catch_bad_responses
 
 logger = logging.getLogger()
 thread_local = threading.local()
-
-OK_DELTA = 2
-WARNING_DELTA = 5
-
-MAX_ELEMS_TO_STDOUT = 20
 
 
 def get_session() -> Any:
@@ -164,9 +161,11 @@ def get_prs(ctx: click.Context, color: bool, headers: Mapping[str, str]) -> Repo
     """
     username = ctx.obj.get_value("username")
     logger.debug(f"Fetching PRs for {username} from github.com \n")
-    url_format = f"https://api.github.com/search/issues?q=is:open+is:pr+review-requested:{username}"
+    url = SEARCH_ENDPOINT.copy()
+    query_params = " ".join(["is:open", "is:pr", f"review-requested:{username}"])
+    url.add(path="/issues", args={"q": query_params})
     with requests.Session() as s:
-        response = s.get(url_format, headers=headers)
+        response = s.get(url, headers=headers)
     catch_bad_responses(response, get="prs")
     prs = response.json()["items"]
 
@@ -195,9 +194,9 @@ def get_unassigned_issues(asc: bool, color: bool, headers: Mapping[str, str]) ->
     def get_collaborator_repos() -> Any:
         """ Get all Github repos where user is classified as a collaborator.
         """
-
-        url = "https://api.github.com/user/repos"
         params = {"affiliation": "collaborator"}
+        url = USER_ENDPOINT.copy()
+        url.path /= "repos"
         response = requests.get(url, headers=headers, params=params)
         catch_bad_responses(response, get="repos")
         return response.json()
@@ -210,7 +209,8 @@ def get_unassigned_issues(asc: bool, color: bool, headers: Mapping[str, str]) ->
         """
 
         session = get_session()
-        url = f"https://api.github.com/repos/{repo['full_name']}/issues"
+        url = REPOS_ENDPOINT.copy()
+        url.path = url.path / repo["full_name"] / "issues"
         with session.get(url, headers=headers, params=params) as response:
             catch_bad_responses(response, get="issues")
             repo_name = repo["full_name"]
@@ -256,8 +256,7 @@ def get_issues(
 
     params = {"direction": "asc" if asc else "desc"}
     logger.debug("Fetching issues from github.com \n")
-    url_format = "https://api.github.com/issues"
-    response = requests.get(url_format, headers=headers, params=params)
+    response = requests.get(ISSUES_ENDPOINT, headers=headers, params=params)
     catch_bad_responses(response, get="issues")
 
     repositories = RepoDict()

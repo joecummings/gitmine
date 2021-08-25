@@ -1,5 +1,4 @@
-from pathlib import Path
+OK_DELTA = 2
+WARNING_DELTA = 5
 
-GH_CREDENTIALS_PATH = Path.home() / ".config" / "gh" / "hosts.yml"
-GHP_CREDENTIALS_DIR = Path.home() / ".config" / "ghp"
-GHP_CREDENTIALS_PATH = GHP_CREDENTIALS_DIR / "hosts.yml"
+MAX_ELEMS_TO_STDOUT = 20
