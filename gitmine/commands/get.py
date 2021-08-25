@@ -38,7 +38,7 @@ class GithubElement:
         url: str,
         elapsed_time: timedelta,
         color_coded: bool,
-        labels: Optional[List[str]] = None,
+        labels: Optional[List[Mapping[str, Any]]] = None,
     ) -> None:
         self.name = name
         self.title = title
@@ -64,11 +64,12 @@ class GithubElement:
             return "yellow"
         return "red"
 
-    def _parse_labels_for_repr(self):
-        label_names = [label["name"] for label in self.labels]
-        all_names = ", ".join(label_names)
-        if all_names:
-            return click.style("".join(["(", all_names, ")"]), fg="green")
+    def _parse_labels_for_repr(self) -> str:
+        if self.labels:
+            label_names = [label["name"] for label in self.labels]
+            all_names = ", ".join(label_names)
+            if all_names:
+                return click.style("".join(["(", all_names, ")"]), fg="green")
         return ""
 
 
@@ -79,7 +80,7 @@ class Issue(GithubElement):
         self,
         title: str,
         number: int,
-        labels: List[str],
+        labels: List[Mapping[str, Any]],
         url: str,
         elapsed_time: timedelta,
         color_coded: bool,
@@ -99,12 +100,7 @@ class PullRequest(GithubElement):
     """Github Pull Request"""
 
     def __init__(
-        self,
-        title: str,
-        number: int,
-        url: str,
-        elapsed_time: timedelta,
-        color_coded: bool,
+        self, title: str, number: int, url: str, elapsed_time: timedelta, color_coded: bool,
     ):
         super().__init__(
             name="PullRequest",
