@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import logging
 import re
 import threading
-from typing import Any, List, Mapping
+from typing import Any, List, Mapping, Optional
 
 import click
 import requests
@@ -38,16 +38,21 @@ class GithubElement:
         url: str,
         elapsed_time: timedelta,
         color_coded: bool,
+        labels: Optional[List[str]] = None,
     ) -> None:
         self.name = name
         self.title = title
         self.number = number
         self.url = url
+        self.labels = labels
         self.elapsed_time = elapsed_time
         self.color_coded = color_coded
 
     def __repr__(self) -> str:
-        return f"{click.style(''.join(['#', str(self.number)]), fg=self._elapsed_time_to_color())} {self.title}"
+        issue_num_with_color = click.style(
+            "".join(["#", str(self.number)]), fg=self._elapsed_time_to_color()
+        )
+        return f"{issue_num_with_color} {self.title} {self._parse_labels_for_repr()}"
 
     def _elapsed_time_to_color(self) -> str:
         if not self.color_coded:
@@ -59,30 +64,47 @@ class GithubElement:
             return "yellow"
         return "red"
 
+    def _parse_labels_for_repr(self):
+        label_names = [label["name"] for label in self.labels]
+        all_names = ", ".join(label_names)
+        if all_names:
+            return click.style("".join(["(", all_names, ")"]), fg="green")
+        return ""
+
 
 class Issue(GithubElement):
-    """ Github Issue
-    """
+    """Github Issue"""
 
     def __init__(
-        self, title: str, number: int, url: str, elapsed_time: timedelta, color_coded: bool,
+        self,
+        title: str,
+        number: int,
+        labels: List[str],
+        url: str,
+        elapsed_time: timedelta,
+        color_coded: bool,
     ):
         super().__init__(
             name="Issue",
             title=title,
             number=number,
             url=url,
+            labels=labels,
             elapsed_time=elapsed_time,
             color_coded=color_coded,
         )
 
 
 class PullRequest(GithubElement):
-    """ Github Pull Request
-    """
+    """Github Pull Request"""
 
     def __init__(
-        self, title: str, number: int, url: str, elapsed_time: timedelta, color_coded: bool,
+        self,
+        title: str,
+        number: int,
+        url: str,
+        elapsed_time: timedelta,
+        color_coded: bool,
     ):
         super().__init__(
             name="PullRequest",
@@ -203,6 +225,7 @@ def get_unassigned_issues(asc: bool, color: bool, headers: Mapping[str, str]) ->
                         title=issue["title"],
                         number=issue["number"],
                         url=issue["html_url"],
+                        labels=issue["labels"],
                         elapsed_time=datetime.now()
                         - datetime.strptime(issue["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
                         color_coded=color,
@@ -249,6 +272,7 @@ def get_issues(
                 title=issue["title"],
                 number=issue["number"],
                 url=issue["html_url"],
+                labels=issue["labels"],
                 elapsed_time=datetime.now()
                 - datetime.strptime(issue["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
                 color_coded=color,
