@@ -1,16 +1,15 @@
-from collections import defaultdict
 import concurrent.futures
-from datetime import datetime, timedelta
 import logging
 import re
 import threading
-from typing import Any, List, Mapping, Optional
+from typing import Any, Mapping
 
 import click
 import requests
 
-from gitmine.constants import MAX_ELEMS_TO_STDOUT, OK_DELTA, WARNING_DELTA
+from gitmine.constants import ISSUE, MAX_ELEMS_TO_STDOUT, PULL_REQUEST
 from gitmine.endpoints import ISSUES_ENDPOINT, REPOS_ENDPOINT, SEARCH_ENDPOINT, USER_ENDPOINT
+from gitmine.models.github_elements import GithubElement, RepoDict, Repository
 from gitmine.utils import catch_bad_responses
 
 logger = logging.getLogger()
@@ -21,139 +20,6 @@ def get_session() -> Any:
     if not hasattr(thread_local, "session"):
         thread_local.session = requests.Session()
     return thread_local.session
-
-
-class GithubElement:
-    """ Container for Github Issue or Pull Request.
-    """
-
-    def __init__(
-        self,
-        name: str,
-        title: str,
-        number: int,
-        url: str,
-        elapsed_time: timedelta,
-        color_coded: bool,
-        labels: Optional[List[Mapping[str, Any]]] = None,
-    ) -> None:
-        self.name = name
-        self.title = title
-        self.number = number
-        self.url = url
-        self.labels = labels
-        self.elapsed_time = elapsed_time
-        self.color_coded = color_coded
-
-    def __repr__(self) -> str:
-        issue_num_with_color = click.style(
-            "".join(["#", str(self.number)]), fg=self._elapsed_time_to_color()
-        )
-        return f"{issue_num_with_color} {self.title} {self._parse_labels_for_repr()}"
-
-    def _elapsed_time_to_color(self) -> str:
-        if not self.color_coded:
-            return "white"
-
-        if self.elapsed_time < timedelta(days=OK_DELTA):
-            return "green"
-        if self.elapsed_time < timedelta(days=WARNING_DELTA):
-            return "yellow"
-        return "red"
-
-    def _parse_labels_for_repr(self) -> str:
-        if self.labels:
-            label_names = [label["name"] for label in self.labels]
-            all_names = ", ".join(label_names)
-            if all_names:
-                return click.style("".join(["(", all_names, ")"]), fg="green")
-        return ""
-
-
-class Issue(GithubElement):
-    """Github Issue"""
-
-    def __init__(
-        self,
-        title: str,
-        number: int,
-        labels: List[Mapping[str, Any]],
-        url: str,
-        elapsed_time: timedelta,
-        color_coded: bool,
-    ):
-        super().__init__(
-            name="Issue",
-            title=title,
-            number=number,
-            url=url,
-            labels=labels,
-            elapsed_time=elapsed_time,
-            color_coded=color_coded,
-        )
-
-
-class PullRequest(GithubElement):
-    """Github Pull Request"""
-
-    def __init__(
-        self, title: str, number: int, url: str, elapsed_time: timedelta, color_coded: bool,
-    ):
-        super().__init__(
-            name="PullRequest",
-            title=title,
-            number=number,
-            url=url,
-            elapsed_time=elapsed_time,
-            color_coded=color_coded,
-        )
-
-
-class Repository:
-    """ Container class for a Github Repository
-    """
-
-    def __init__(self, name: str) -> None:
-        self.name = name
-        self.issues: List[Issue] = []
-        self.prs: List[PullRequest] = []
-
-    def add_issue(self, issue: Issue) -> None:
-        self.issues.append(issue)
-
-    def add_pr(self, pr: PullRequest) -> None:
-        self.prs.append(pr)
-
-    def has_issues(self) -> bool:
-        return bool(self.issues)
-
-    def has_prs(self) -> bool:
-        return bool(self.prs)
-
-    def as_str(self, elem: str) -> str:
-        res = [self.name]
-        if elem == "issues":
-            for issue in self.issues:
-                res.append(str(issue))
-        elif elem == "prs":
-            for pr in self.prs:
-                res.append(str(pr))
-        return "\n".join(res) + "\n"
-
-
-class RepoDict(defaultdict):  # type: ignore
-    """ Class to extend *defaultdict* to be able to access a key as input
-    """
-
-    def __missing__(self, key: str) -> Repository:
-        self[key] = Repository(name=key)
-        return self[key]  # type: ignore
-
-    def total_num_of_issues(self) -> int:
-        return sum(len(r.issues) for r in self.values())
-
-    def total_num_of_prs(self) -> int:
-        return sum(len(r.prs) for r in self.values())
 
 
 def get_prs(ctx: click.Context, color: bool, headers: Mapping[str, str]) -> RepoDict:
@@ -174,14 +40,7 @@ def get_prs(ctx: click.Context, color: bool, headers: Mapping[str, str]) -> Repo
         url = pr["html_url"]
         repo_name = re.findall(r"github.com/(.+?)/pull", url)[0]
         repositories[repo_name].add_pr(
-            PullRequest(
-                title=pr["title"],
-                number=pr["number"],
-                url=url,
-                elapsed_time=datetime.now()
-                - datetime.strptime(pr["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
-                color_coded=color,
-            )
+            GithubElement.from_dict(pr, elem_type=PULL_REQUEST, color_coded=color)
         )
 
     return repositories
@@ -217,22 +76,14 @@ def get_unassigned_issues(asc: bool, color: bool, headers: Mapping[str, str]) ->
             repo_class = Repository(name=repo_name)
             for issue in response.json():
                 repo_class.add_issue(
-                    Issue(
-                        title=issue["title"],
-                        number=issue["number"],
-                        url=issue["html_url"],
-                        labels=issue["labels"],
-                        elapsed_time=datetime.now()
-                        - datetime.strptime(issue["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
-                        color_coded=color,
-                    )
+                    GithubElement.from_dict(issue, elem_type=ISSUE, color_coded=color)
                 )
             return repo_class
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         repositories = RepoDict(
             # https://www.gitmemory.com/issue/python/mypy/7217/512213750
-            Repository,  # type: ignore
+            Repository,
             {
                 repo.name: repo
                 for repo in filter(
@@ -263,15 +114,7 @@ def get_issues(
     for issue in response.json():
         repo_name = issue["repository"]["full_name"]
         repositories[repo_name].add_issue(
-            Issue(
-                title=issue["title"],
-                number=issue["number"],
-                url=issue["html_url"],
-                labels=issue["labels"],
-                elapsed_time=datetime.now()
-                - datetime.strptime(issue["created_at"], "%Y-%m-%dT%H:%M:%SZ"),
-                color_coded=color,
-            )
+            GithubElement.from_dict(issue, elem_type=ISSUE, color_coded=color)
         )
 
     return repositories
