@@ -60,7 +60,7 @@ class GithubElement:
     def from_dict(
         cls, obj: Mapping[str, Any], *, elem_type: str, color_coded: bool = False
     ) -> "GithubElement":
-        return GithubElement(
+        return cls(
             elem_type=elem_type,
             title=obj["title"],
             number=obj["number"],
