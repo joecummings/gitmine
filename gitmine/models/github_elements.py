@@ -8,8 +8,7 @@ from gitmine.constants import OK_DELTA, WARNING_DELTA
 
 
 class GithubElement:
-    """ Container for Github Issue or Pull Request.
-    """
+    """Container for Github Issue or Pull Request."""
 
     def __init__(
         self,
@@ -51,7 +50,7 @@ class GithubElement:
             label_names = [label["name"] for label in self.labels]
             all_names = ", ".join(label_names)
             if all_names:
-                return click.style("".join(["(", all_names, ")"]), fg="green")
+                return str(click.style("".join(["(", all_names, ")"]), fg="green"))
         return ""
 
     def _get_elapsed_time(self) -> timedelta:
@@ -73,8 +72,7 @@ class GithubElement:
 
 
 class Repository:
-    """ Container class for a Github Repository
-    """
+    """Container class for a Github Repository"""
 
     def __init__(self, name: str) -> None:
         self.name = name
@@ -105,8 +103,7 @@ class Repository:
 
 
 class RepoDict(defaultdict):  # type: ignore
-    """ Class to extend *defaultdict* to be able to access a key as input
-    """
+    """Class to extend *defaultdict* to be able to access a key as input"""
 
     def __missing__(self, key: str) -> Repository:
         self[key] = Repository(name=key)

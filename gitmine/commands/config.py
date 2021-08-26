@@ -11,8 +11,7 @@ logger = logging.getLogger()
 
 
 class GithubConfig:
-    """ Github Config object, holds information about username and bearer token
-    """
+    """Github Config object, holds information about username and bearer token"""
 
     def __init__(self) -> None:
         self.token = ""
@@ -38,7 +37,7 @@ class GithubConfig:
 
     @staticmethod
     def load_config_from_yaml(path_to_yaml_file: Path) -> "GithubConfig":
-        with open(path_to_yaml_file, "r") as handle:
+        with open(path_to_yaml_file, "r", encoding="utf-8") as handle:
             gh_yaml = yaml.load(handle, Loader=yaml.FullLoader)
             github_config = GithubConfig()
 
@@ -59,8 +58,7 @@ class GithubConfig:
 
 
 def config_command(ctx: click.Context, prop: str, value: str) -> None:
-    """ Implementation of the *config* command
-    """
+    """Implementation of the *config* command"""
     if not value and prop:
         click.echo(ctx.obj.get_value(prop))
 
@@ -79,16 +77,15 @@ def config_command(ctx: click.Context, prop: str, value: str) -> None:
 
 
 def set_config(config_dict: Dict[str, Dict[str, str]]) -> None:
-    """ Set config file based on dictionary of config values.
-    """
-    with open(GHP_CREDENTIALS_PATH, "w+") as handle:
+    """Set config file based on dictionary of config values."""
+    with open(GHP_CREDENTIALS_PATH, "w+", encoding="utf-8") as handle:
         yaml.dump(config_dict, handle)
 
 
 def get_or_create_github_config() -> GithubConfig:
-    """ Get Github Config info if it's already been written to disk,
-        otherwise create an empty config to be filled in later.
-        Create a credentials folder if it does not exist.
+    """Get Github Config info if it's already been written to disk,
+    otherwise create an empty config to be filled in later.
+    Create a credentials folder if it does not exist.
     """
     if not GHP_CREDENTIALS_DIR.exists():
         GHP_CREDENTIALS_DIR.mkdir(parents=True)
