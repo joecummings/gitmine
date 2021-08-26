@@ -50,7 +50,7 @@ class GithubElement:
             label_names = [label["name"] for label in self.labels]
             all_names = ", ".join(label_names)
             if all_names:
-                return str(click.style("".join(["(", all_names, ")"]), fg="green"))
+                return str(click.style("".join(["(", all_names, ")"]), fg="cyan"))
         return ""
 
     def _get_elapsed_time(self) -> timedelta:
