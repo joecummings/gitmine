@@ -5,8 +5,7 @@ from requests import Response
 
 
 def set_verbosity(verbose: int) -> None:
-    """ Sets the Log Level given a verbose number.
-    """
+    """Sets the Log Level given a verbose number."""
     if verbose == 1:
         click.echo("Logging level set to INFO.")
         logging.basicConfig(level=logging.INFO)
@@ -16,8 +15,7 @@ def set_verbosity(verbose: int) -> None:
 
 
 def catch_bad_responses(res: Response, **kwargs: str) -> None:
-    """ Raise error code if response is not 200 OK.
-    """
+    """Raise error code if response is not 200 OK."""
     if res.status_code == 401:
         message = f"Error Fetching {kwargs['get']}. Unauthorized 401: Bad Credentials"
         raise click.ClickException(message)

@@ -23,8 +23,7 @@ def get_session() -> Any:
 
 
 def get_prs(ctx: click.Context, color: bool, headers: Mapping[str, str]) -> RepoDict:
-    """ Get all Github PRs assigned to user.
-    """
+    """Get all Github PRs assigned to user."""
     username = ctx.obj.get_value("username")
     logger.debug(f"Fetching PRs for {username} from github.com \n")
     url = SEARCH_ENDPOINT.copy()
@@ -47,12 +46,10 @@ def get_prs(ctx: click.Context, color: bool, headers: Mapping[str, str]) -> Repo
 
 
 def get_unassigned_issues(asc: bool, color: bool, headers: Mapping[str, str]) -> RepoDict:
-    """ Get all Github Issues that are unnassigned from the repos in which user is a collaborator.
-    """
+    """Get all Github Issues that are unnassigned from the repos in which user is a collaborator."""
 
     def get_collaborator_repos() -> Any:
-        """ Get all Github repos where user is classified as a collaborator.
-        """
+        """Get all Github repos where user is classified as a collaborator."""
         params = {"affiliation": "collaborator"}
         url = USER_ENDPOINT.copy()
         url.path /= "repos"
@@ -64,8 +61,7 @@ def get_unassigned_issues(asc: bool, color: bool, headers: Mapping[str, str]) ->
     params = {"direction": "asc" if asc else "desc", "assignee": "none"}
 
     def get_issues_by_repo(repo: Mapping[str, Any]) -> Repository:
-        """ Get all Github Issues in a repo specified by params.
-        """
+        """Get all Github Issues in a repo specified by params."""
 
         session = get_session()
         url = REPOS_ENDPOINT.copy()
@@ -87,7 +83,8 @@ def get_unassigned_issues(asc: bool, color: bool, headers: Mapping[str, str]) ->
             {
                 repo.name: repo
                 for repo in filter(
-                    lambda x: x.has_issues(), executor.map(get_issues_by_repo, collaborator_repos),
+                    lambda x: x.has_issues(),
+                    executor.map(get_issues_by_repo, collaborator_repos),
                 )
             },
         )
@@ -98,8 +95,7 @@ def get_unassigned_issues(asc: bool, color: bool, headers: Mapping[str, str]) ->
 def get_issues(
     unassigned: bool, asc: bool, color: bool, repo_name: str, headers: Mapping[str, str]
 ) -> RepoDict:
-    """ Get all Github Issues assigned to user.
-    """
+    """Get all Github Issues assigned to user."""
 
     if unassigned:
         click.echo("Hang on, getting unassigned issues for you...")
@@ -121,7 +117,7 @@ def get_issues(
 
 
 def echo_info(repos: RepoDict, elem: str) -> None:
-    """ Print issues/prs in the following format:
+    """Print issues/prs in the following format:
 
     repo-title
     #issue-number issue-title
@@ -150,8 +146,7 @@ def get_command(
     repo_name: str = "",
     unassigned: bool = False,
 ) -> None:
-    """ Implementation of the *get* command.
-    """
+    """Implementation of the *get* command."""
 
     logger.info(
         f"""Getting {spec} for {ctx.obj.get_value('username')}
