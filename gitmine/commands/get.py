@@ -45,7 +45,9 @@ def get_prs(ctx: click.Context, color: bool, headers: Mapping[str, str]) -> Repo
     return repositories
 
 
-def get_unassigned_issues(asc: bool, color: bool, headers: Mapping[str, str]) -> RepoDict:
+def get_unassigned_issues(
+    asc: bool, color: bool, repo_name: str, headers: Mapping[str, str]
+) -> RepoDict:
     """Get all Github Issues that are unnassigned from the repos in which user is a collaborator."""
 
     def get_collaborator_repos() -> Any:
@@ -58,6 +60,8 @@ def get_unassigned_issues(asc: bool, color: bool, headers: Mapping[str, str]) ->
         return response.json()
 
     collaborator_repos = get_collaborator_repos()
+    if repo_name:
+        collaborator_repos = filter(lambda x: x["full_name"] == repo_name, collaborator_repos)
     params = {"direction": "asc" if asc else "desc", "assignee": "none"}
 
     def get_issues_by_repo(repo: Mapping[str, Any]) -> Repository:
@@ -99,16 +103,22 @@ def get_issues(
 
     if unassigned:
         click.echo("Hang on, getting unassigned issues for you...")
-        return get_unassigned_issues(asc, color, headers)
+        return get_unassigned_issues(asc, color, repo_name, headers)
+
+    if repo_name:
+        url = REPOS_ENDPOINT.copy()
+        url.path = url.path / repo_name / "issues"
+    else:
+        url = ISSUES_ENDPOINT.copy()
 
     params = {"direction": "asc" if asc else "desc"}
     logger.debug("Fetching issues from github.com \n")
-    response = requests.get(ISSUES_ENDPOINT, headers=headers, params=params)
+    response = requests.get(url, headers=headers, params=params)
     catch_bad_responses(response, get="issues")
 
     repositories = RepoDict()
     for issue in response.json():
-        repo_name = issue["repository"]["full_name"]
+        repo_name = repo_name or issue["repository"]["full_name"]
         repositories[repo_name].add_issue(
             GithubElement.from_dict(issue, elem_type=ISSUE, color_coded=color)
         )
