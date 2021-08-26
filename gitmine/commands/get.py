@@ -6,8 +6,9 @@ from typing import Any, Mapping
 
 import click
 import requests
+from tabulate import tabulate
 
-from gitmine.constants import ISSUE, MAX_ELEMS_TO_STDOUT, PULL_REQUEST
+from gitmine.constants import ISSUE, PULL_REQUEST
 from gitmine.endpoints import ISSUES_ENDPOINT, REPOS_ENDPOINT, SEARCH_ENDPOINT, USER_ENDPOINT
 from gitmine.models.github_elements import GithubElement, RepoDict, Repository
 from gitmine.utils import catch_bad_responses
@@ -118,8 +119,8 @@ def get_issues(
 
     repositories = RepoDict()
     for issue in response.json():
-        repo_name = repo_name or issue["repository"]["full_name"]
-        repositories[repo_name].add_issue(
+        name = repo_name or issue["repository"]["full_name"]
+        repositories[name].add_issue(
             GithubElement.from_dict(issue, elem_type=ISSUE, color_coded=color)
         )
 
@@ -138,14 +139,10 @@ def echo_info(repos: RepoDict, elem: str) -> None:
     if not repos:
         click.echo(f"No {elem} found! Keep up the good work.")
 
-    num_of_elems = repos.total_num_of_issues() if elem == "issues" else repos.total_num_of_prs()
-
-    if num_of_elems > MAX_ELEMS_TO_STDOUT:
-        all_repos = [repo.as_str(elem) for repo in repos.values()]
-        click.echo_via_pager("\n".join(all_repos))
-    else:
-        for repo in repos.values():
-            click.echo(repo.as_str(elem))
+    all_repos = []
+    for repo in repos.values():
+        all_repos.extend(repo.format_for_table(elem))
+    click.echo_via_pager(tabulate(all_repos, tablefmt="plain"))
 
 
 def get_command(

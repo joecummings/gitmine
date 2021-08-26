@@ -28,12 +28,12 @@ class GithubElement:
         self.created_at = created_at
         self.color_coded = color_coded
 
-    def __repr__(self) -> str:
+    def get_formatted_args_for_table(self) -> List[Optional[str]]:
         issue_num_with_color = click.style(
             "".join(["#", str(self.number)]),
             fg=self._elapsed_time_to_color(self._get_elapsed_time()),
         )
-        return f"{issue_num_with_color} {self.title} {self._parse_labels_for_repr()}"
+        return [issue_num_with_color, self.title, self._parse_labels_for_repr()]
 
     def _elapsed_time_to_color(self, time: timedelta) -> str:
         if not self.color_coded:
@@ -91,15 +91,17 @@ class Repository:
     def has_prs(self) -> bool:
         return bool(self.prs)
 
-    def as_str(self, elem: str) -> str:
-        res = [self.name]
+    def format_for_table(self, elem: str) -> List[List[Optional[str]]]:
+        res = list([["***", self.name, None]])
         if elem == "issues":
             for issue in self.issues:
-                res.append(str(issue))
+                res.append(issue.get_formatted_args_for_table())
         elif elem == "prs":
             for pr in self.prs:
-                res.append(str(pr))
-        return "\n".join(res) + "\n"
+                res.append(pr.get_formatted_args_for_table())
+        # Append row of None's for space between Repos
+        res.append([None, None, None])
+        return res
 
 
 class RepoDict(defaultdict):  # type: ignore
