@@ -3,7 +3,7 @@ default:
 
 SHELL=/usr/bin/env bash
 
-PYTHON_FILES=gitmine/*.py gitmine/commands/*.py
+PYTHON_FILES=gitmine/*.py gitmine/commands/*.py gitmine/models/*.py
 
 install:
 	pip install -r requirements.txt
