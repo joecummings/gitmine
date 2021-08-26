@@ -79,7 +79,7 @@ def get_unassigned_issues(asc: bool, color: bool, headers: Mapping[str, str]) ->
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         repositories = RepoDict(
             # https://www.gitmemory.com/issue/python/mypy/7217/512213750
-            Repository,
+            Repository,  # type: ignore
             {
                 repo.name: repo
                 for repo in filter(
