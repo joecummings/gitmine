@@ -38,6 +38,11 @@ class GithubElement:
         self.color_coded = color_coded
 
     def get_formatted_args_for_table(self) -> List[Optional[str]]:
+        """Format arguments for Tabulate table.
+
+        Returns:
+            List comprised of Issue/PR number, name, labels, and date
+        """
         issue_num_with_color = click.style(f"#{self.number}", fg=ELEM_NUM_COLOR)
 
         date = click.style(
@@ -48,6 +53,10 @@ class GithubElement:
         return [issue_num_with_color, self.title, self._parse_labels_for_repr(), date]
 
     def _elapsed_time_to_color(self, time: timedelta) -> str:
+        """Return a color for how much time has elapsed since the Issue/PR was opened.
+
+        Depends on the colors specified by OK_DELTA, WARNING_DELTA, and DANGER_DELTA.
+        """
         if not self.color_coded:
             return "white"
 
@@ -58,6 +67,7 @@ class GithubElement:
         return DANGER_DELTA_COLOR
 
     def _parse_labels_for_repr(self) -> str:
+        """Parses Issue/PR labels as one string in parens."""
         if self.labels:
             label_names = [label["name"] for label in self.labels]
             all_names = ", ".join(label_names)
@@ -72,6 +82,7 @@ class GithubElement:
     def from_dict(
         cls, obj: Mapping[str, Any], *, elem_type: str, color_coded: bool = False
     ) -> "GithubElement":
+        """Creates a GithubElement from a JSON Github API response."""
         return cls(
             elem_type=elem_type,
             title=obj["title"],
@@ -117,7 +128,7 @@ class Repository:
 
 
 class RepoDict(defaultdict):  # type: ignore
-    """Class to extend *defaultdict* to be able to access a key as input"""
+    """Extends *defaultdict* to be able to access a key as input"""
 
     def __missing__(self, key: str) -> Repository:
         self[key] = Repository(name=key)

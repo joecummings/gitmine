@@ -11,7 +11,7 @@ from tabulate import tabulate
 from gitmine.constants import ISSUE, PULL_REQUEST
 from gitmine.endpoints import ISSUES_ENDPOINT, REPOS_ENDPOINT, SEARCH_ENDPOINT, USER_ENDPOINT
 from gitmine.models.github_elements import GithubElement, RepoDict, Repository
-from gitmine.utils import catch_bad_responses
+from gitmine.utils import SafeSession, safe_request
 
 logger = logging.getLogger()
 thread_local = threading.local()
@@ -19,7 +19,7 @@ thread_local = threading.local()
 
 def get_session() -> Any:
     if not hasattr(thread_local, "session"):
-        thread_local.session = requests.Session()
+        thread_local.session = SafeSession()
     return thread_local.session
 
 
@@ -30,9 +30,7 @@ def get_prs(ctx: click.Context, color: bool, headers: Mapping[str, str]) -> Repo
     url = SEARCH_ENDPOINT.copy()
     query_params = " ".join(["is:open", "is:pr", f"review-requested:{username}"])
     url.add(path="/issues", args={"q": query_params})
-    with requests.Session() as s:
-        response = s.get(url, headers=headers)
-    catch_bad_responses(response, get="prs")
+    response = safe_request(requests.get, url, headers, {})
     prs = response.json()["items"]
 
     repositories = RepoDict()
@@ -56,8 +54,7 @@ def get_unassigned_issues(
         params = {"affiliation": "collaborator"}
         url = USER_ENDPOINT.copy()
         url.path /= "repos"
-        response = requests.get(url, headers=headers, params=params)
-        catch_bad_responses(response, get="repos")
+        response = safe_request(requests.get, url, headers, params)
         return response.json()
 
     collaborator_repos = get_collaborator_repos()
@@ -71,8 +68,7 @@ def get_unassigned_issues(
         session = get_session()
         url = REPOS_ENDPOINT.copy()
         url.path = url.path / repo["full_name"] / "issues"
-        with session.get(url, headers=headers, params=params) as response:
-            catch_bad_responses(response, get="issues")
+        with session.safe_get(url, headers=headers, params=params) as response:
             repo_name = repo["full_name"]
             repo_class = Repository(name=repo_name)
             for issue in response.json():
@@ -114,8 +110,7 @@ def get_issues(
 
     params = {"direction": "asc" if asc else "desc"}
     logger.debug("Fetching issues from github.com \n")
-    response = requests.get(url, headers=headers, params=params)
-    catch_bad_responses(response, get="issues")
+    response = safe_request(requests.get, url, headers, params)
 
     repositories = RepoDict()
     for issue in response.json():
@@ -138,6 +133,7 @@ def echo_info(repos: RepoDict, elem: str) -> None:
 
     if not repos:
         click.echo(f"No {elem} found! Keep up the good work.")
+        return
 
     all_repos = []
     for repo in repos.values():
