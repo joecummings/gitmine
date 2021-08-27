@@ -4,7 +4,16 @@ from typing import Any, List, Mapping, Optional
 
 import click
 
-from gitmine.constants import OK_DELTA, WARNING_DELTA
+from gitmine.constants import (
+    DANGER_DELTA_COLOR,
+    ELEM_NUM_COLOR,
+    LABELS_COLOR,
+    OK_DELTA,
+    OK_DELTA_COLOR,
+    REPO_NAME_COLOR,
+    WARNING_DELTA,
+    WARNING_DELTA_COLOR,
+)
 
 
 class GithubElement:
@@ -29,28 +38,31 @@ class GithubElement:
         self.color_coded = color_coded
 
     def get_formatted_args_for_table(self) -> List[Optional[str]]:
-        issue_num_with_color = click.style(
-            "".join(["#", str(self.number)]),
+        issue_num_with_color = click.style(f"#{self.number}", fg=ELEM_NUM_COLOR)
+
+        date = click.style(
+            f"{self._get_elapsed_time().days} days ago",
             fg=self._elapsed_time_to_color(self._get_elapsed_time()),
+            dim=True,
         )
-        return [issue_num_with_color, self.title, self._parse_labels_for_repr()]
+        return [issue_num_with_color, self.title, self._parse_labels_for_repr(), date]
 
     def _elapsed_time_to_color(self, time: timedelta) -> str:
         if not self.color_coded:
             return "white"
 
         if time < timedelta(days=OK_DELTA):
-            return "green"
+            return OK_DELTA_COLOR
         if time < timedelta(days=WARNING_DELTA):
-            return "yellow"
-        return "red"
+            return WARNING_DELTA_COLOR
+        return DANGER_DELTA_COLOR
 
     def _parse_labels_for_repr(self) -> str:
         if self.labels:
             label_names = [label["name"] for label in self.labels]
             all_names = ", ".join(label_names)
             if all_names:
-                return str(click.style("".join(["(", all_names, ")"]), fg="cyan"))
+                return str(click.style(f"({all_names})", fg=LABELS_COLOR, dim=True))
         return ""
 
     def _get_elapsed_time(self) -> timedelta:
@@ -92,7 +104,7 @@ class Repository:
         return bool(self.prs)
 
     def format_for_table(self, elem: str) -> List[List[Optional[str]]]:
-        res = list([["***", self.name, None]])
+        res = list([[None, click.style(self.name, fg=REPO_NAME_COLOR, bold=True), None]])
         if elem == "issues":
             for issue in self.issues:
                 res.append(issue.get_formatted_args_for_table())
