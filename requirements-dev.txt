@@ -2,7 +2,7 @@ black==24.3.0
 flake8==3.9.2
 isort==5.9.3
 mypy==0.910
-pydantic==1.8.2
+pydantic==1.10.13
 pydocstyle==6.1.1
 pylint==2.10.2
 pytest==6.2.4
